@@ -1,0 +1,248 @@
+// Wheewise — MVP schema
+// See WHEEWISE_SDD.md §6 for the v2 superset.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================
+// Auth + Users
+// =============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  phone         String?   @unique
+  passwordHash  String
+  name          String?
+  role          Role      @default(BUYER)
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  dealer    Dealer?
+  enquiries Enquiry[]
+  sessions  Session[]
+  accounts  Account[]
+}
+
+// NextAuth Prisma adapter tables (kept minimal — Credentials provider
+// only really needs User, but the adapter expects these too).
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// =============================================================
+// Dealer + Storefront
+// =============================================================
+
+model Dealer {
+  id           String       @id @default(cuid())
+  userId       String       @unique
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName String
+  city         String
+  phone        String
+  whatsapp     String?
+  status       DealerStatus @default(ACTIVE)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  store        Store?
+  listings     Listing[]
+  enquiries    Enquiry[]
+  subscription Subscription?
+}
+
+model Store {
+  id           String   @id @default(cuid())
+  dealerId     String   @unique
+  dealer       Dealer   @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  slug         String   @unique
+  logoUrl      String?
+  bannerUrl    String?
+  bio          String?
+  primaryColor String   @default("#DC2626")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// =============================================================
+// Listings
+// =============================================================
+
+model Listing {
+  id            String        @id @default(cuid())
+  dealerId      String
+  dealer        Dealer        @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  vehicleType   VehicleType
+  make          String
+  model         String
+  year          Int
+  fuelType      FuelType
+  transmission  Transmission?
+  odometerKm    Int
+  askingPrice   Decimal       @db.Decimal(12, 2)
+  description   String        @db.Text
+  city          String
+  status        ListingStatus @default(ACTIVE)
+  viewCount     Int           @default(0)
+  enquiryCount  Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  photos    ListingPhoto[]
+  enquiries Enquiry[]
+
+  @@index([city, vehicleType, status])
+  @@index([dealerId, status])
+  @@index([status, createdAt])
+}
+
+model ListingPhoto {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url       String
+  sortOrder Int     @default(0)
+
+  @@index([listingId, sortOrder])
+}
+
+// =============================================================
+// Leads
+// =============================================================
+
+model Enquiry {
+  id         String        @id @default(cuid())
+  listingId  String
+  listing    Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  dealerId   String
+  dealer     Dealer        @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  buyerId    String?
+  buyer      User?         @relation(fields: [buyerId], references: [id])
+  buyerName  String
+  buyerPhone String
+  buyerEmail String?
+  message    String?
+  source     EnquirySource @default(FORM)
+  priority   Int           @default(0)
+  isRead     Boolean       @default(false)
+  isContacted Boolean      @default(false)
+  createdAt  DateTime      @default(now())
+
+  @@index([dealerId, isRead, priority, createdAt])
+  @@index([listingId, createdAt])
+}
+
+// =============================================================
+// Subscriptions
+// =============================================================
+
+model Subscription {
+  id               String    @id @default(cuid())
+  dealerId         String    @unique
+  dealer           Dealer    @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  plan             PlanTier  @default(FREE_TRIAL)
+  status           SubStatus @default(TRIALING)
+  razorpaySubId    String?   @unique
+  currentPeriodEnd DateTime
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+// =============================================================
+// Enums
+// =============================================================
+
+enum Role {
+  BUYER
+  DEALER
+  ADMIN
+}
+
+enum DealerStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum VehicleType {
+  CAR
+  BIKE
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  CNG
+  ELECTRIC
+  HYBRID
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+  AMT
+  CVT
+}
+
+enum ListingStatus {
+  ACTIVE
+  PAUSED
+  SOLD
+}
+
+enum EnquirySource {
+  FORM
+  WHATSAPP
+  CALL
+}
+
+enum PlanTier {
+  FREE_TRIAL
+  MONTHLY
+  YEARLY
+}
+
+enum SubStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
