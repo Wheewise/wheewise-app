@@ -30,6 +30,8 @@ model User {
   sessions      Session[]
   accounts      Account[]
   savedListings SavedListing[]
+  conversations Conversation[]
+  messages      Message[]
 }
 
 // NextAuth Prisma adapter tables (kept minimal — Credentials provider
@@ -86,9 +88,10 @@ model Dealer {
   updatedAt    DateTime     @updatedAt
 
   store        Store?
-  listings     Listing[]
-  enquiries    Enquiry[]
-  subscription Subscription?
+  listings      Listing[]
+  enquiries     Enquiry[]
+  subscription  Subscription?
+  conversations Conversation[]
 }
 
 model Store {
@@ -130,7 +133,8 @@ model Listing {
 
   photos    ListingPhoto[]
   enquiries Enquiry[]
-  savedBy   SavedListing[]
+  savedBy       SavedListing[]
+  conversations Conversation[]
 
   @@index([city, vehicleType, status])
   @@index([dealerId, status])
@@ -171,6 +175,41 @@ model Enquiry {
 
   @@index([dealerId, isRead, priority, createdAt])
   @@index([listingId, createdAt])
+}
+
+// =============================================================
+// Chat
+// =============================================================
+
+model Conversation {
+  id        String   @id @default(cuid())
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId   String
+  buyer     User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  dealerId  String
+  dealer    Dealer   @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+
+  @@unique([listingId, buyerId])
+  @@index([buyerId])
+  @@index([dealerId])
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  body           String    @db.Text
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([conversationId, createdAt])
 }
 
 // =============================================================

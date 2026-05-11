@@ -1,0 +1,115 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+export async function GET(req: Request) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const conversationId = searchParams.get("conversationId");
+  if (!conversationId) {
+    return NextResponse.json({ error: "conversationId required" }, { status: 400 });
+  }
+
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { buyerId: true, dealerId: true },
+  });
+  if (
+    !conversation ||
+    (conversation.buyerId !== session.user.id &&
+      conversation.dealerId !== session.user.id)
+  ) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const messages = await prisma.message.findMany({
+    where: { conversationId },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      senderId: true,
+      body: true,
+      createdAt: true,
+      readAt: true,
+    },
+    take: 100,
+  });
+
+  // Mark messages from the other party as read
+  const unreadIds = messages
+    .filter((m) => m.senderId !== session.user.id && !m.readAt)
+    .map((m) => m.id);
+
+  if (unreadIds.length > 0) {
+    await prisma.message.updateMany({
+      where: { id: { in: unreadIds } },
+      data: { readAt: new Date() },
+    });
+  }
+
+  return NextResponse.json(messages);
+}
+
+export async function POST(req: Request) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let conversationId: string;
+  let body: string;
+  try {
+    const json = await req.json();
+    conversationId = json.conversationId;
+    body = json.body;
+  } catch {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+
+  if (!conversationId || !body || typeof body !== "string" || body.trim().length === 0) {
+    return NextResponse.json(
+      { error: "conversationId and body required" },
+      { status: 400 },
+    );
+  }
+
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { buyerId: true, dealerId: true },
+  });
+  if (
+    !conversation ||
+    (conversation.buyerId !== session.user.id &&
+      conversation.dealerId !== session.user.id)
+  ) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const message = await prisma.message.create({
+    data: {
+      conversationId,
+      senderId: session.user.id,
+      body: body.trim(),
+    },
+  });
+
+  await prisma.conversation.update({
+    where: { id: conversationId },
+    data: { updatedAt: new Date() },
+  });
+
+  return NextResponse.json(
+    {
+      id: message.id,
+      senderId: message.senderId,
+      body: message.body,
+      createdAt: message.createdAt,
+      readAt: message.readAt,
+    },
+    { status: 201 },
+  );
+}

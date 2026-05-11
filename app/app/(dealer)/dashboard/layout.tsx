@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth, signOut } from "@/lib/auth";
 import { Logo } from "@/components/brand/Logo";
 import { DashboardNav } from "./DashboardNav";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 
 export default async function DashboardLayout({
   children,
@@ -51,6 +52,7 @@ export default async function DashboardLayout({
       <main className="lg:pl-60">
         <div className="mx-auto max-w-6xl px-4 py-6 lg:px-8 lg:py-10">{children}</div>
       </main>
+      <ChatWidget userId={session.user.id} />
     </div>
   );
 }

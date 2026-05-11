@@ -10,6 +10,7 @@ import { PhotoGallery } from "./PhotoGallery";
 import { EmiCalculator } from "@/components/vehicle/EmiCalculator";
 import { SaveButton } from "@/components/vehicle/SaveButton";
 import { CompareButton } from "@/components/vehicle/CompareButton";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 import { incrementViewCount } from "./view-actions";
 
 type Params = Promise<{ id: string }>;
@@ -185,6 +186,9 @@ export default async function VehiclePage({ params }: { params: Params }) {
           </aside>
         </div>
       </div>
+      {session?.user ? (
+        <ChatWidget listingId={listing.id} userId={session.user.id} />
+      ) : null}
     </div>
   );
 }

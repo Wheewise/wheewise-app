@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 const items = [
   { href: "/dashboard", label: "Overview", exact: true },
@@ -13,6 +14,22 @@ const items = [
 
 export function DashboardNav() {
   const pathname = usePathname();
+  const [chatUnread, setChatUnread] = useState(0);
+
+  useEffect(() => {
+    const check = () => {
+      fetch("/api/chat/conversations")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: Array<{ unread: number }> | null) => {
+          if (data) setChatUnread(data.reduce((s, c) => s + c.unread, 0));
+        })
+        .catch(() => {});
+    };
+    check();
+    const interval = setInterval(check, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <ul className="space-y-1">
       {items.map((item) => {
@@ -34,6 +51,21 @@ export function DashboardNav() {
           </li>
         );
       })}
+      <li>
+        <Link
+          href="/dashboard"
+          className={`text-foreground hover:bg-surface-muted flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            chatUnread > 0 ? "font-semibold" : ""
+          }`}
+        >
+          <span>Messages</span>
+          {chatUnread > 0 && (
+            <span className="bg-brand-red inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
+              {chatUnread}
+            </span>
+          )}
+        </Link>
+      </li>
     </ul>
   );
 }
