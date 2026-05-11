@@ -94,6 +94,7 @@ model Dealer {
   enquiries     Enquiry[]
   subscription  Subscription?
   conversations Conversation[]
+  apiKeys       ApiKey[]
 }
 
 model Store {
@@ -230,6 +231,23 @@ model SavedListing {
 
   @@unique([userId, listingId])
   @@index([userId])
+}
+
+// =============================================================
+// Developer API
+// =============================================================
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  dealerId  String
+  dealer    Dealer   @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  name      String
+  key       String   @unique
+  lastUsedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([dealerId])
+  @@index([key])
 }
 
 // =============================================================
