@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { ListingCard } from "@/components/storefront/ListingCard";
 import { whatsappLink } from "@/lib/whatsapp";
+import { computeTrustScore, scoreToStars, scoreLabel } from "@/lib/trust-score";
+import { Stars } from "@/components/brand/Stars";
 
 type Params = Promise<{ slug: string }>;
 type Search = Promise<{
@@ -53,6 +55,19 @@ export default async function StorefrontPage({
     include: { dealer: true },
   });
   if (!store) notFound();
+
+  const [soldCount, listingCount] = await Promise.all([
+    prisma.listing.count({ where: { dealerId: store.dealerId, status: "SOLD" } }),
+    prisma.listing.count({ where: { dealerId: store.dealerId } }),
+  ]);
+
+  const trustScore = computeTrustScore({
+    gstVerified: store.dealer.gstVerified,
+    accountCreatedAt: store.dealer.createdAt,
+    soldCount,
+    listingCount,
+    avgResponseHours: null, // computed once chat is active
+  });
 
   const listings = await prisma.listing.findMany({
     where: {
@@ -130,6 +145,9 @@ export default async function StorefrontPage({
                     GST Verified
                   </span>
                 ) : null}
+              </div>
+              <div className="flex items-center gap-2">
+                <Stars stars={scoreToStars(trustScore)} label={scoreLabel(trustScore)} />
               </div>
               <p className="text-sm text-zinc-500">{dealer.city}</p>
             </div>

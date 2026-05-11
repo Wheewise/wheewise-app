@@ -233,6 +233,24 @@ model SavedListing {
 }
 
 // =============================================================
+// Notifications
+// =============================================================
+
+model NotificationTemplate {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  subject   String
+  body      String   @db.Text
+  type      TemplateType @default(EMAIL)
+  updatedAt DateTime @updatedAt
+}
+
+enum TemplateType {
+  EMAIL
+  SMS
+}
+
+// =============================================================
 // Subscriptions
 // =============================================================
 
