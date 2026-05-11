@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { LoginForm } from "./LoginForm";
+import { LoginTabs } from "./LoginTabs";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -13,7 +13,7 @@ export default function LoginPage() {
           Welcome back. Manage your inventory and leads.
         </p>
       </div>
-      <LoginForm />
+      <LoginTabs />
       <div className="border-border-default border-t pt-4 text-sm text-zinc-500">
         Don&apos;t have an account?{" "}
         <Link
