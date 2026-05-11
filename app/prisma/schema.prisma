@@ -95,6 +95,7 @@ model Dealer {
   subscription  Subscription?
   conversations Conversation[]
   apiKeys       ApiKey[]
+  payouts       Payout[]
 }
 
 model Store {
@@ -248,6 +249,32 @@ model ApiKey {
 
   @@index([dealerId])
   @@index([key])
+}
+
+// =============================================================
+// Payouts
+// =============================================================
+
+model Payout {
+  id               String       @id @default(cuid())
+  dealerId         String
+  dealer           Dealer       @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  amount           Decimal      @db.Decimal(12, 2)
+  status           PayoutStatus @default(PENDING)
+  razorpayPayoutId String?
+  note             String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([dealerId])
+  @@index([status])
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
 }
 
 // =============================================================

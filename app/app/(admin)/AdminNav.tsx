@@ -7,6 +7,8 @@ const items = [
   { href: "/admin", label: "Overview", exact: true },
   { href: "/admin/dealers", label: "Dealers" },
   { href: "/admin/listings", label: "Listings" },
+  { href: "/admin/payouts", label: "Payouts" },
+  { href: "/admin/templates", label: "Templates" },
 ];
 
 export function AdminNav() {

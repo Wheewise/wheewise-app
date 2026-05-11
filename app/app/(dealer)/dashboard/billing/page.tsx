@@ -1,4 +1,5 @@
 import { requireDealer } from "@/lib/dealer";
+import { getDealerPayouts } from "@/lib/actions/admin";
 import { CheckoutButton } from "./CheckoutButton";
 
 const plans = [
@@ -23,6 +24,7 @@ export default async function BillingPage() {
   const { dealer } = await requireDealer({ allowPaywalled: true });
   const sub = dealer.subscription;
   const blocked = sub?.status === "PAST_DUE" || sub?.status === "CANCELLED";
+  const payouts = await getDealerPayouts(dealer.id);
 
   return (
     <div className="space-y-6">
@@ -97,6 +99,43 @@ export default async function BillingPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section>
+        <h2 className="text-base font-semibold">Payout history</h2>
+        {payouts.length === 0 ? (
+          <p className="mt-2 text-sm text-zinc-500">No payouts yet.</p>
+        ) : (
+          <div className="border-border-default bg-background mt-3 rounded-lg border">
+            {payouts.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center justify-between border-b px-4 py-3 last:border-0"
+              >
+                <div>
+                  <span className="text-sm font-semibold">
+                    ₹{Number(p.amount).toLocaleString("en-IN")}
+                  </span>
+                  <p className="text-xs text-zinc-500">
+                    {new Date(p.createdAt).toLocaleDateString("en-IN")}
+                    {p.note ? ` · ${p.note}` : ""}
+                  </p>
+                </div>
+                <span
+                  className={`rounded px-2 py-0.5 text-[10px] font-medium uppercase ${
+                    p.status === "PAID"
+                      ? "bg-green-100 text-green-700"
+                      : p.status === "REJECTED"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {p.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

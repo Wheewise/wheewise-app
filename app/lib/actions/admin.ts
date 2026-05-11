@@ -88,3 +88,37 @@ export async function removeListingByAdmin(listingId: string) {
 
   revalidatePath("/admin");
 }
+
+// --- Payouts ---
+
+export async function getPayouts() {
+  await requireAdmin();
+
+  return prisma.payout.findMany({
+    include: {
+      dealer: { select: { businessName: true, phone: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function updatePayoutStatus(
+  payoutId: string,
+  status: "APPROVED" | "REJECTED" | "PAID",
+) {
+  await requireAdmin();
+
+  await prisma.payout.update({
+    where: { id: payoutId },
+    data: { status },
+  });
+
+  revalidatePath("/admin/payouts");
+}
+
+export async function getDealerPayouts(dealerId: string) {
+  return prisma.payout.findMany({
+    where: { dealerId },
+    orderBy: { createdAt: "desc" },
+  });
+}
