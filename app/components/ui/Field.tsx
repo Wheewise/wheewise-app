@@ -16,15 +16,13 @@ export function Field({
   const errorId = `${name}-error`;
   return (
     <div className="space-y-1.5">
-      <label htmlFor={name} className="block text-sm font-medium text-foreground">
+      <label htmlFor={name} className="text-foreground block text-sm font-medium">
         {label}
       </label>
       {children}
-      {hint && !errors?.length ? (
-        <p className="text-xs text-zinc-500">{hint}</p>
-      ) : null}
+      {hint && !errors?.length ? <p className="text-xs text-zinc-500">{hint}</p> : null}
       {errors?.length ? (
-        <p id={errorId} className="text-xs text-brand-red">
+        <p id={errorId} className="text-brand-red text-xs">
           {errors[0]}
         </p>
       ) : null}
@@ -40,7 +38,7 @@ export function Input(
     <input
       {...rest}
       aria-invalid={invalid || undefined}
-      className={`block w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none transition-colors focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 ${
+      className={`focus:border-brand-red focus:ring-brand-red/20 block w-full rounded-md border px-3 py-2 text-sm shadow-xs transition-colors outline-none focus:ring-2 ${
         invalid ? "border-brand-red" : "border-border-default"
       } ${className}`}
     />

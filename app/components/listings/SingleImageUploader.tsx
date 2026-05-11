@@ -56,7 +56,7 @@ export function SingleImageUploader({
       <input type="hidden" name={name} value={url} />
       <div className="flex items-start gap-4">
         <div
-          className={`relative w-40 ${aspectClass} overflow-hidden rounded-md border border-border-default bg-surface-muted`}
+          className={`relative w-40 ${aspectClass} border-border-default bg-surface-muted overflow-hidden rounded-md border`}
         >
           {url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -73,7 +73,7 @@ export function SingleImageUploader({
           ) : null}
         </div>
         <div className="flex flex-col gap-2">
-          <label className="inline-flex cursor-pointer items-center justify-center rounded-md border border-border-default bg-background px-3 py-1.5 text-sm hover:bg-surface-muted">
+          <label className="border-border-default bg-background hover:bg-surface-muted inline-flex cursor-pointer items-center justify-center rounded-md border px-3 py-1.5 text-sm">
             {url ? "Replace" : "Upload"}
             <input
               type="file"
@@ -90,14 +90,14 @@ export function SingleImageUploader({
             <button
               type="button"
               onClick={() => setUrl("")}
-              className="text-xs text-zinc-500 hover:text-brand-red"
+              className="hover:text-brand-red text-xs text-zinc-500"
             >
               Remove
             </button>
           ) : null}
         </div>
       </div>
-      {error ? <p className="text-xs text-brand-red">{error}</p> : null}
+      {error ? <p className="text-brand-red text-xs">{error}</p> : null}
     </div>
   );
 }

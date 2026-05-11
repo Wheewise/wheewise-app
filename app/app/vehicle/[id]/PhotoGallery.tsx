@@ -6,18 +6,14 @@ export function PhotoGallery({ photos }: { photos: string[] }) {
   const [active, setActive] = useState(0);
   if (photos.length === 0) {
     return (
-      <div className="aspect-[4/3] w-full rounded-lg border border-border-default bg-surface-muted" />
+      <div className="border-border-default bg-surface-muted aspect-[4/3] w-full rounded-lg border" />
     );
   }
   return (
     <div className="space-y-3">
-      <div className="aspect-[4/3] overflow-hidden rounded-lg border border-border-default bg-surface-muted">
+      <div className="border-border-default bg-surface-muted aspect-[4/3] overflow-hidden rounded-lg border">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={photos[active]}
-          alt=""
-          className="h-full w-full object-cover"
-        />
+        <img src={photos[active]} alt="" className="h-full w-full object-cover" />
       </div>
       {photos.length > 1 ? (
         <div className="flex gap-2 overflow-x-auto">
@@ -31,11 +27,7 @@ export function PhotoGallery({ photos }: { photos: string[] }) {
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={url}
-                alt=""
-                className="h-16 w-24 object-cover"
-              />
+              <img src={url} alt="" className="h-16 w-24 object-cover" />
             </button>
           ))}
         </div>

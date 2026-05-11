@@ -20,10 +20,8 @@ export function LeadActions({
         <button
           type="button"
           disabled={pending}
-          onClick={() =>
-            startTransition(() => setLeadFlags(leadId, { isRead: true }))
-          }
-          className="rounded px-2 py-1 text-zinc-500 hover:bg-surface-muted hover:text-foreground"
+          onClick={() => startTransition(() => setLeadFlags(leadId, { isRead: true }))}
+          className="hover:bg-surface-muted hover:text-foreground rounded px-2 py-1 text-zinc-500"
         >
           Mark read
         </button>
@@ -37,7 +35,7 @@ export function LeadActions({
               setLeadFlags(leadId, { isContacted: true, isRead: true }),
             )
           }
-          className="rounded px-2 py-1 text-zinc-500 hover:bg-surface-muted hover:text-foreground"
+          className="hover:bg-surface-muted hover:text-foreground rounded px-2 py-1 text-zinc-500"
         >
           Mark contacted
         </button>

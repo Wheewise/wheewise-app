@@ -8,11 +8,7 @@ export default async function LeadsPage() {
 
   const leads = await prisma.enquiry.findMany({
     where: { dealerId: dealer.id },
-    orderBy: [
-      { isRead: "asc" },
-      { priority: "desc" },
-      { createdAt: "desc" },
-    ],
+    orderBy: [{ isRead: "asc" }, { priority: "desc" }, { createdAt: "desc" }],
     include: {
       listing: {
         select: { id: true, make: true, model: true, year: true },
@@ -25,21 +21,21 @@ export default async function LeadsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          {leads.length} enquir{leads.length === 1 ? "y" : "ies"} from buyers,
-          prioritized by intent.
+          {leads.length} enquir{leads.length === 1 ? "y" : "ies"} from buyers, prioritized
+          by intent.
         </p>
       </div>
 
       {leads.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border-default bg-background p-10 text-center">
+        <div className="border-border-default bg-background rounded-lg border border-dashed p-10 text-center">
           <h2 className="text-base font-semibold">No leads yet</h2>
           <p className="mt-1 text-sm text-zinc-500">
             Share your storefront link to start receiving enquiries.
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border-default bg-background">
-          <ul className="divide-y divide-border-default">
+        <div className="border-border-default bg-background overflow-hidden rounded-lg border">
+          <ul className="divide-border-default divide-y">
             {leads.map((lead) => {
               const waNumber = lead.buyerPhone.replace(/[^\d]/g, "");
               const vehicle = `${lead.listing.year} ${lead.listing.make} ${lead.listing.model}`;
@@ -57,17 +53,17 @@ export default async function LeadsPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{lead.buyerName}</span>
                       {!lead.isRead ? (
-                        <span className="rounded-full bg-brand-red px-2 py-0.5 text-[10px] font-semibold uppercase text-white">
+                        <span className="bg-brand-red rounded-full px-2 py-0.5 text-[10px] font-semibold text-white uppercase">
                           New
                         </span>
                       ) : null}
                       {lead.priority >= 50 ? (
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-800">
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 uppercase">
                           Hot
                         </span>
                       ) : null}
                       {lead.isContacted ? (
-                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-800">
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 uppercase">
                           Contacted
                         </span>
                       ) : null}
@@ -84,9 +80,7 @@ export default async function LeadsPage() {
                       {lead.buyerEmail ? ` · ${lead.buyerEmail}` : ""}
                     </div>
                     {lead.message ? (
-                      <p className="mt-2 text-sm text-foreground">
-                        “{lead.message}”
-                      </p>
+                      <p className="text-foreground mt-2 text-sm">“{lead.message}”</p>
                     ) : null}
                     <div className="mt-2 text-xs text-zinc-500">
                       {lead.createdAt.toLocaleString()}
@@ -103,7 +97,7 @@ export default async function LeadsPage() {
                     </a>
                     <a
                       href={`tel:${lead.buyerPhone}`}
-                      className="rounded-md border border-border-default bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-surface-muted"
+                      className="border-border-default bg-background text-foreground hover:bg-surface-muted rounded-md border px-3 py-1.5 text-xs font-semibold"
                     >
                       Call
                     </a>

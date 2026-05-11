@@ -11,13 +11,13 @@ export default async function NewListingPage() {
       <div>
         <Link
           href="/dashboard/inventory"
-          className="text-sm text-zinc-500 hover:text-foreground"
+          className="hover:text-foreground text-sm text-zinc-500"
         >
           ← Back to inventory
         </Link>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">Add a vehicle</h1>
       </div>
-      <div className="rounded-lg border border-border-default bg-background p-6">
+      <div className="border-border-default bg-background rounded-lg border p-6">
         <ListingForm
           action={createListing}
           defaults={{ city: dealer.city }}

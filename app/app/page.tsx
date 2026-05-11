@@ -19,25 +19,25 @@ export default function Home() {
 
 function SiteHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b border-border-default bg-background/90 backdrop-blur">
+    <header className="border-border-default bg-background/90 sticky top-0 z-30 border-b backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Logo variant="wordmark" size={28} href="/" />
         <nav className="flex items-center gap-2 sm:gap-4">
           <Link
             href="/browse"
-            className="text-sm font-medium text-foreground hover:text-brand-red"
+            className="text-foreground hover:text-brand-red text-sm font-medium"
           >
             Browse
           </Link>
           <Link
             href="/login"
-            className="text-sm font-medium text-foreground hover:text-brand-red"
+            className="text-foreground hover:text-brand-red text-sm font-medium"
           >
             Sign in
           </Link>
           <Link
             href="/signup/dealer"
-            className="rounded-md bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red-dark"
+            className="bg-brand-red hover:bg-brand-red-dark rounded-md px-4 py-2 text-sm font-semibold text-white"
           >
             Join as a dealer
           </Link>
@@ -49,24 +49,24 @@ function SiteHeader() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-brand-ink text-white">
+    <section className="bg-brand-ink relative overflow-hidden text-white">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
         <div className="max-w-3xl">
-          <span className="inline-block rounded-full bg-brand-red/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-red-soft">
+          <span className="bg-brand-red/20 text-brand-red-soft inline-block rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase">
             For India&apos;s pre-owned dealers
           </span>
-          <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
+          <h1 className="mt-6 text-4xl leading-tight font-bold tracking-tight sm:text-6xl">
             Where Smart Wheels Begin.
           </h1>
           <p className="mt-6 text-lg text-zinc-300 sm:text-xl">
-            One link. Your entire showroom. Verified buyers. Zero commission.
-            Wheewise turns your stock into a digital storefront you can share on
-            WhatsApp in seconds.
+            One link. Your entire showroom. Verified buyers. Zero commission. Wheewise
+            turns your stock into a digital storefront you can share on WhatsApp in
+            seconds.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               href="/signup/dealer"
-              className="rounded-md bg-brand-red px-6 py-3 text-base font-semibold text-white hover:bg-brand-red-dark"
+              className="bg-brand-red hover:bg-brand-red-dark rounded-md px-6 py-3 text-base font-semibold text-white"
             >
               Start 14-day free trial
             </Link>
@@ -82,7 +82,7 @@ function Hero() {
           </p>
         </div>
       </div>
-      <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-brand-red/30 blur-3xl" />
+      <div className="bg-brand-red/30 absolute -top-20 -right-20 h-80 w-80 rounded-full blur-3xl" />
     </section>
   );
 }
@@ -103,7 +103,7 @@ function Challenges() {
     },
   ];
   return (
-    <section className="border-b border-border-default bg-surface-muted">
+    <section className="border-border-default bg-surface-muted border-b">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
           The challenges dealers face today
@@ -112,7 +112,7 @@ function Challenges() {
           {items.map((it) => (
             <div
               key={it.title}
-              className="rounded-lg border border-border-default bg-background p-6"
+              className="border-border-default bg-background rounded-lg border p-6"
             >
               <h3 className="text-lg font-semibold">{it.title}</h3>
               <p className="mt-2 text-sm text-zinc-600">{it.body}</p>
@@ -133,23 +133,22 @@ function Solution() {
     "Zero commission — flat subscription, you keep 100% of every sale.",
   ];
   return (
-    <section className="border-b border-border-default bg-background">
+    <section className="border-border-default bg-background border-b">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
           The Wheewise solution
         </h2>
         <p className="mt-3 max-w-2xl text-lg text-zinc-600">
-          Built around how Indian dealers actually sell — fast, mobile, and on
-          WhatsApp.
+          Built around how Indian dealers actually sell — fast, mobile, and on WhatsApp.
         </p>
         <ul className="mt-10 grid gap-4 sm:grid-cols-2">
           {items.map((it) => (
             <li
               key={it}
-              className="flex items-start gap-3 rounded-lg border border-border-default bg-background p-4"
+              className="border-border-default bg-background flex items-start gap-3 rounded-lg border p-4"
             >
-              <span className="mt-1 inline-block h-2 w-2 flex-shrink-0 rounded-full bg-brand-red" />
-              <span className="text-sm text-foreground">{it}</span>
+              <span className="bg-brand-red mt-1 inline-block h-2 w-2 flex-shrink-0 rounded-full" />
+              <span className="text-foreground text-sm">{it}</span>
             </li>
           ))}
         </ul>
@@ -160,16 +159,16 @@ function Solution() {
 
 function Showroom() {
   return (
-    <section className="border-b border-border-default bg-surface-muted">
+    <section className="border-border-default bg-surface-muted border-b">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2">
         <div>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Your complete digital showroom — in a single shareable link.
           </h2>
           <p className="mt-4 text-lg text-zinc-600">
-            Send <span className="font-mono">wheewise.in/s/your-store</span> on
-            WhatsApp, Instagram, or SMS. Buyers see your inventory with photos,
-            prices, and one-tap WhatsApp / call buttons.
+            Send <span className="font-mono">wheewise.in/s/your-store</span> on WhatsApp,
+            Instagram, or SMS. Buyers see your inventory with photos, prices, and one-tap
+            WhatsApp / call buttons.
           </p>
           <ul className="mt-6 space-y-2 text-sm text-zinc-700">
             <li>• Custom URL, logo, banner, and brand color</li>
@@ -178,18 +177,15 @@ function Showroom() {
             <li>• Mobile-first — looks great on every phone</li>
           </ul>
         </div>
-        <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-border-default bg-background shadow-xl">
-          <div className="h-32 w-full bg-brand-red" />
+        <div className="border-border-default bg-background relative aspect-[4/5] overflow-hidden rounded-2xl border shadow-xl">
+          <div className="bg-brand-red h-32 w-full" />
           <div className="px-5 py-4">
-            <div className="-mt-12 mb-3 h-16 w-16 rounded-lg border-4 border-background bg-brand-ink" />
+            <div className="border-background bg-brand-ink -mt-12 mb-3 h-16 w-16 rounded-lg border-4" />
             <div className="text-base font-bold">Sharma Auto, Indore</div>
             <div className="text-xs text-zinc-500">12 cars · 4 bikes</div>
             <div className="mt-4 grid grid-cols-2 gap-3">
               {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="aspect-[4/3] rounded-md bg-surface-muted"
-                />
+                <div key={i} className="bg-surface-muted aspect-[4/3] rounded-md" />
               ))}
             </div>
           </div>
@@ -224,7 +220,7 @@ function HowItWorks() {
     },
   ];
   return (
-    <section id="how" className="border-b border-border-default bg-background">
+    <section id="how" className="border-border-default bg-background border-b">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
           How Wheewise works
@@ -233,9 +229,9 @@ function HowItWorks() {
           {steps.map((s) => (
             <li
               key={s.n}
-              className="rounded-lg border border-border-default bg-surface-muted p-5"
+              className="border-border-default bg-surface-muted rounded-lg border p-5"
             >
-              <div className="text-sm font-bold text-brand-red">{s.n}</div>
+              <div className="text-brand-red text-sm font-bold">{s.n}</div>
               <div className="mt-2 font-semibold">{s.t}</div>
               <p className="mt-1 text-sm text-zinc-600">{s.d}</p>
             </li>
@@ -248,10 +244,7 @@ function HowItWorks() {
 
 function Pricing() {
   return (
-    <section
-      id="pricing"
-      className="border-b border-border-default bg-surface-muted"
-    >
+    <section id="pricing" className="border-border-default bg-surface-muted border-b">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -262,8 +255,8 @@ function Pricing() {
           </p>
         </div>
         <div className="mx-auto mt-10 grid max-w-3xl gap-6 sm:grid-cols-2">
-          <div className="rounded-2xl border border-border-default bg-background p-8">
-            <div className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          <div className="border-border-default bg-background rounded-2xl border p-8">
+            <div className="text-sm font-semibold tracking-wide text-zinc-500 uppercase">
               Monthly
             </div>
             <div className="mt-2">
@@ -277,16 +270,16 @@ function Pricing() {
             </ul>
             <Link
               href="/signup/dealer"
-              className="mt-8 block rounded-md border border-border-default px-4 py-2.5 text-center text-sm font-semibold hover:bg-surface-muted"
+              className="border-border-default hover:bg-surface-muted mt-8 block rounded-md border px-4 py-2.5 text-center text-sm font-semibold"
             >
               Start free trial
             </Link>
           </div>
-          <div className="relative rounded-2xl border-2 border-brand-red bg-background p-8 shadow-xl">
-            <div className="absolute -top-3 right-6 rounded-full bg-brand-red px-3 py-1 text-xs font-bold uppercase text-white">
+          <div className="border-brand-red bg-background relative rounded-2xl border-2 p-8 shadow-xl">
+            <div className="bg-brand-red absolute -top-3 right-6 rounded-full px-3 py-1 text-xs font-bold text-white uppercase">
               Save 17%
             </div>
-            <div className="text-sm font-semibold uppercase tracking-wide text-brand-red">
+            <div className="text-brand-red text-sm font-semibold tracking-wide uppercase">
               Yearly
             </div>
             <div className="mt-2">
@@ -300,7 +293,7 @@ function Pricing() {
             </ul>
             <Link
               href="/signup/dealer"
-              className="mt-8 block rounded-md bg-brand-red px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-brand-red-dark"
+              className="bg-brand-red hover:bg-brand-red-dark mt-8 block rounded-md px-4 py-2.5 text-center text-sm font-semibold text-white"
             >
               Start free trial
             </Link>
@@ -324,7 +317,7 @@ function CTA() {
           </p>
           <Link
             href="/signup/dealer"
-            className="mt-8 inline-block rounded-md bg-brand-red px-8 py-3 text-base font-semibold hover:bg-brand-red-dark"
+            className="bg-brand-red hover:bg-brand-red-dark mt-8 inline-block rounded-md px-8 py-3 text-base font-semibold"
           >
             Start free trial
           </Link>
@@ -336,7 +329,7 @@ function CTA() {
 
 function SiteFooter() {
   return (
-    <footer className="border-t border-border-default bg-background">
+    <footer className="border-border-default bg-background border-t">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-zinc-500 sm:flex-row sm:px-6">
         <div className="flex items-center gap-3">
           <Logo variant="wordmark" size={20} href="/" />

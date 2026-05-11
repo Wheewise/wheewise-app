@@ -14,7 +14,7 @@ export default async function StorePage() {
         </p>
       </div>
 
-      <div className="rounded-lg border border-border-default bg-background p-6">
+      <div className="border-border-default bg-background rounded-lg border p-6">
         <StoreForm
           defaults={{
             slug: dealer.store.slug,

@@ -14,13 +14,16 @@ export default function LoginPage() {
         </p>
       </div>
       <LoginForm />
-      <div className="border-t border-border-default pt-4 text-sm text-zinc-500">
+      <div className="border-border-default border-t pt-4 text-sm text-zinc-500">
         Don&apos;t have an account?{" "}
-        <Link href="/signup/dealer" className="font-medium text-brand-red hover:underline">
+        <Link
+          href="/signup/dealer"
+          className="text-brand-red font-medium hover:underline"
+        >
           Join as a dealer
         </Link>{" "}
         or{" "}
-        <Link href="/signup" className="font-medium text-brand-red hover:underline">
+        <Link href="/signup" className="text-brand-red font-medium hover:underline">
           sign up as a buyer
         </Link>
         .

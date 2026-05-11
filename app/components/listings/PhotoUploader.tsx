@@ -11,9 +11,7 @@ export function PhotoUploader({
   initialPhotos?: string[];
   name?: string;
 }) {
-  const [photos, setPhotos] = useState<Photo[]>(
-    initialPhotos.map((url) => ({ url })),
-  );
+  const [photos, setPhotos] = useState<Photo[]>(initialPhotos.map((url) => ({ url })));
   const fileInput = useRef<HTMLInputElement>(null);
 
   async function uploadOne(file: File): Promise<string> {
@@ -112,15 +110,13 @@ export function PhotoUploader({
         {photos.map((p, i) => (
           <div
             key={`${p.url}-${i}`}
-            className="group relative aspect-square overflow-hidden rounded-md border border-border-default bg-surface-muted"
+            className="group border-border-default bg-surface-muted relative aspect-square overflow-hidden rounded-md border"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={p.url}
               alt=""
-              className={`h-full w-full object-cover ${
-                p.uploading ? "opacity-50" : ""
-              }`}
+              className={`h-full w-full object-cover ${p.uploading ? "opacity-50" : ""}`}
             />
             {p.uploading ? (
               <div className="absolute inset-0 flex items-center justify-center text-xs text-white">
@@ -128,16 +124,16 @@ export function PhotoUploader({
               </div>
             ) : null}
             {p.error ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-brand-red/80 px-2 text-center text-xs text-white">
+              <div className="bg-brand-red/80 absolute inset-0 flex items-center justify-center px-2 text-center text-xs text-white">
                 {p.error}
               </div>
             ) : null}
             {i === 0 && !p.uploading ? (
-              <span className="absolute left-1 top-1 rounded bg-brand-red px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">
+              <span className="bg-brand-red absolute top-1 left-1 rounded px-1.5 py-0.5 text-[10px] font-semibold text-white uppercase">
                 Cover
               </span>
             ) : null}
-            <div className="absolute right-1 top-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="absolute top-1 right-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
               {i > 0 && !p.uploading ? (
                 <button
                   type="button"
@@ -159,7 +155,7 @@ export function PhotoUploader({
         ))}
 
         {photos.length < 10 ? (
-          <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-border-default bg-background text-center text-xs text-zinc-500 hover:bg-surface-muted">
+          <label className="border-border-default bg-background hover:bg-surface-muted flex aspect-square cursor-pointer flex-col items-center justify-center rounded-md border border-dashed text-center text-xs text-zinc-500">
             <span className="text-lg">+</span>
             <span>Add photo</span>
             <input

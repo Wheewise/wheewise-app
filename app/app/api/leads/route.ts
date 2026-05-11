@@ -25,7 +25,7 @@ function getClientIp(req: Request): string {
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
-  const limit = rateLimit(`lead:${ip}`, 5, 60 * 60 * 1000);
+  const limit = await rateLimit(`lead:${ip}`, 5, 60 * 60 * 1000);
   if (!limit.ok) {
     return NextResponse.json(
       { error: "Too many enquiries. Try again later." },
@@ -48,10 +48,7 @@ export async function POST(req: Request) {
     include: { dealer: { include: { user: true } } },
   });
   if (!listing || listing.status !== "ACTIVE") {
-    return NextResponse.json(
-      { error: "Listing not available" },
-      { status: 404 },
-    );
+    return NextResponse.json({ error: "Listing not available" }, { status: 404 });
   }
 
   const session = await auth();

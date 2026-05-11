@@ -53,7 +53,7 @@ export function EnquiryForm({
     );
   }
 
-  const errs = state.kind === "error" ? state.fields ?? {} : {};
+  const errs = state.kind === "error" ? (state.fields ?? {}) : {};
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
@@ -91,20 +91,16 @@ export function EnquiryForm({
           name="message"
           rows={3}
           maxLength={1000}
-          className="block w-full rounded-md border border-border-default bg-background px-3 py-2 text-sm shadow-xs outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20"
+          className="border-border-default bg-background focus:border-brand-red focus:ring-brand-red/20 block w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus:ring-2"
           placeholder="When can I see this vehicle?"
         />
       </Field>
       {state.kind === "error" ? (
-        <p className="rounded-md bg-brand-red/10 px-3 py-2 text-sm text-brand-red">
+        <p className="bg-brand-red/10 text-brand-red rounded-md px-3 py-2 text-sm">
           {state.message}
         </p>
       ) : null}
-      <Button
-        type="submit"
-        disabled={state.kind === "submitting"}
-        className="w-full"
-      >
+      <Button type="submit" disabled={state.kind === "submitting"} className="w-full">
         {state.kind === "submitting" ? "Sending…" : "Send enquiry"}
       </Button>
     </form>

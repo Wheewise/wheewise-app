@@ -1,3 +1,5 @@
+import "./env";
+
 import Razorpay from "razorpay";
 import crypto from "crypto";
 
@@ -6,9 +8,7 @@ const keySecret = process.env.RAZORPAY_KEY_SECRET;
 const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
 export const razorpay =
-  keyId && keySecret
-    ? new Razorpay({ key_id: keyId, key_secret: keySecret })
-    : null;
+  keyId && keySecret ? new Razorpay({ key_id: keyId, key_secret: keySecret }) : null;
 
 export const PLAN_IDS = {
   MONTHLY: process.env.RAZORPAY_PLAN_MONTHLY ?? "",
@@ -17,20 +17,14 @@ export const PLAN_IDS = {
 
 export type RazorpayPlanTier = keyof typeof PLAN_IDS;
 
-export function verifyWebhookSignature(
-  rawBody: string,
-  signature: string,
-): boolean {
+export function verifyWebhookSignature(rawBody: string, signature: string): boolean {
   if (!webhookSecret) return false;
   const expected = crypto
     .createHmac("sha256", webhookSecret)
     .update(rawBody)
     .digest("hex");
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(expected),
-      Buffer.from(signature),
-    );
+    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
   } catch {
     return false;
   }

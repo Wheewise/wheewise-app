@@ -1,13 +1,7 @@
 import { z } from "zod";
 
 export const VEHICLE_TYPES = ["CAR", "BIKE"] as const;
-export const FUEL_TYPES = [
-  "PETROL",
-  "DIESEL",
-  "CNG",
-  "ELECTRIC",
-  "HYBRID",
-] as const;
+export const FUEL_TYPES = ["PETROL", "DIESEL", "CNG", "ELECTRIC", "HYBRID"] as const;
 export const TRANSMISSIONS = ["MANUAL", "AUTOMATIC", "AMT", "CVT"] as const;
 
 export const listingSchema = z.object({

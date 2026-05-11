@@ -7,9 +7,7 @@ export const storeSchema = z.object({
     .max(60)
     .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, and hyphens only"),
   bio: z.string().max(500).optional().or(z.literal("")),
-  primaryColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, "Use a hex color like #DC2626"),
+  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a hex color like #DC2626"),
   logoUrl: z.string().url().optional().or(z.literal("")),
   bannerUrl: z.string().url().optional().or(z.literal("")),
 });

@@ -41,9 +41,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
     ...(sp.fuel && (FUEL_OPTIONS as readonly string[]).includes(sp.fuel)
       ? { fuelType: sp.fuel as (typeof FUEL_OPTIONS)[number] }
       : {}),
-    ...(sp.city
-      ? { city: { contains: sp.city, mode: "insensitive" as const } }
-      : {}),
+    ...(sp.city ? { city: { contains: sp.city, mode: "insensitive" as const } } : {}),
     ...(sp.q
       ? {
           OR: [
@@ -81,13 +79,13 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   }
 
   return (
-    <div className="min-h-screen bg-surface-muted">
-      <header className="border-b border-border-default bg-background">
+    <div className="bg-surface-muted min-h-screen">
+      <header className="border-border-default bg-background border-b">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Logo variant="wordmark" size={26} href="/" />
           <Link
             href="/signup/dealer"
-            className="rounded-md bg-brand-red px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-red-dark"
+            className="bg-brand-red hover:bg-brand-red-dark rounded-md px-3 py-1.5 text-sm font-semibold text-white"
           >
             Sell on Wheewise
           </Link>
@@ -106,7 +104,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
 
         <form
           method="get"
-          className="mt-6 grid gap-3 rounded-lg border border-border-default bg-background p-4 sm:grid-cols-2 lg:grid-cols-4"
+          className="border-border-default bg-background mt-6 grid gap-3 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-4"
         >
           <Field label="Search">
             <input
@@ -172,13 +170,13 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
           <div className="flex items-end gap-2">
             <button
               type="submit"
-              className="flex-1 rounded-md bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red-dark"
+              className="bg-brand-red hover:bg-brand-red-dark flex-1 rounded-md px-4 py-2 text-sm font-semibold text-white"
             >
               Apply filters
             </button>
             <Link
               href="/browse"
-              className="rounded-md border border-border-default px-3 py-2 text-sm hover:bg-surface-muted"
+              className="border-border-default hover:bg-surface-muted rounded-md border px-3 py-2 text-sm"
             >
               Reset
             </Link>
@@ -187,7 +185,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
 
         <section className="py-8">
           {listings.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border-default bg-background p-12 text-center text-sm text-zinc-500">
+            <div className="border-border-default bg-background rounded-lg border border-dashed p-12 text-center text-sm text-zinc-500">
               No vehicles match your filters. Try widening your search.
             </div>
           ) : (
@@ -216,9 +214,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
 
         {totalPages > 1 ? (
           <div className="flex items-center justify-center gap-2 pb-10 text-sm">
-            {page > 1 ? (
-              <PageLink qs={qs} page={page - 1} label="← Previous" />
-            ) : null}
+            {page > 1 ? <PageLink qs={qs} page={page - 1} label="← Previous" /> : null}
             <span className="text-zinc-500">
               Page {page} of {totalPages}
             </span>
@@ -238,7 +234,7 @@ const inputClass =
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-xs font-medium uppercase tracking-wide text-zinc-500">
+      <span className="block text-xs font-medium tracking-wide text-zinc-500 uppercase">
         {label}
       </span>
       <span className="mt-1 block">{children}</span>
@@ -260,7 +256,7 @@ function PageLink({
   return (
     <Link
       href={`/browse?${params.toString()}`}
-      className="rounded-md border border-border-default bg-background px-3 py-1.5 hover:bg-surface-muted"
+      className="border-border-default bg-background hover:bg-surface-muted rounded-md border px-3 py-1.5"
     >
       {label}
     </Link>

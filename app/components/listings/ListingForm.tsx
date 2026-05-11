@@ -3,11 +3,7 @@
 import { useActionState } from "react";
 import { Field, Input, Button } from "@/components/ui/Field";
 import { PhotoUploader } from "./PhotoUploader";
-import {
-  FUEL_TYPES,
-  TRANSMISSIONS,
-  VEHICLE_TYPES,
-} from "@/lib/validators/listing";
+import { FUEL_TYPES, TRANSMISSIONS, VEHICLE_TYPES } from "@/lib/validators/listing";
 import type { ListingActionState } from "@/lib/actions/listings";
 
 type Defaults = {
@@ -29,20 +25,16 @@ export function ListingForm({
   defaults = {},
   submitLabel = "Save listing",
 }: {
-  action: (
-    state: ListingActionState,
-    formData: FormData,
-  ) => Promise<ListingActionState>;
+  action: (state: ListingActionState, formData: FormData) => Promise<ListingActionState>;
   defaults?: Defaults;
   submitLabel?: string;
 }) {
-  const [state, formAction, pending] = useActionState<
-    ListingActionState,
-    FormData
-  >(action, undefined);
+  const [state, formAction, pending] = useActionState<ListingActionState, FormData>(
+    action,
+    undefined,
+  );
 
-  const errors =
-    state && "ok" in state && state.ok === false ? state.errors : {};
+  const errors = state && "ok" in state && state.ok === false ? state.errors : {};
 
   const select =
     "block w-full rounded-md border border-border-default bg-background px-3 py-2 text-sm shadow-xs outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20";
@@ -65,12 +57,7 @@ export function ListingForm({
           </select>
         </Field>
         <Field label="City" name="city" errors={errors.city}>
-          <Input
-            id="city"
-            name="city"
-            defaultValue={defaults.city}
-            required
-          />
+          <Input id="city" name="city" defaultValue={defaults.city} required />
         </Field>
       </div>
 
@@ -109,11 +96,7 @@ export function ListingForm({
             ))}
           </select>
         </Field>
-        <Field
-          label="Transmission"
-          name="transmission"
-          errors={errors.transmission}
-        >
+        <Field label="Transmission" name="transmission" errors={errors.transmission}>
           <select
             id="transmission"
             name="transmission"
@@ -140,11 +123,7 @@ export function ListingForm({
         </Field>
       </div>
 
-      <Field
-        label="Asking price (₹)"
-        name="askingPrice"
-        errors={errors.askingPrice}
-      >
+      <Field label="Asking price (₹)" name="askingPrice" errors={errors.askingPrice}>
         <Input
           id="askingPrice"
           name="askingPrice"
@@ -175,7 +154,7 @@ export function ListingForm({
       </div>
 
       {state && "ok" in state && state.ok === false && state.formError ? (
-        <p className="rounded-md bg-brand-red/10 px-3 py-2 text-sm text-brand-red">
+        <p className="bg-brand-red/10 text-brand-red rounded-md px-3 py-2 text-sm">
           {state.formError}
         </p>
       ) : null}

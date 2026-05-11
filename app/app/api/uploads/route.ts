@@ -37,13 +37,13 @@ export async function POST(req: Request) {
     );
   }
   if (size > MAX_PHOTO_BYTES) {
-    return NextResponse.json(
-      { error: "File too large (max 8 MB)" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "File too large (max 8 MB)" }, { status: 400 });
   }
 
-  const safeExt = ext.replace(/[^a-z0-9]/gi, "").toLowerCase().slice(0, 5);
+  const safeExt = ext
+    .replace(/[^a-z0-9]/gi, "")
+    .toLowerCase()
+    .slice(0, 5);
   const key = `listings/${session.user.id}/${Date.now()}-${crypto.randomUUID()}.${safeExt}`;
 
   const command = new PutObjectCommand({

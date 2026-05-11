@@ -31,7 +31,7 @@ export default async function InventoryPage() {
       </div>
 
       {listings.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border-default bg-background p-10 text-center">
+        <div className="border-border-default bg-background rounded-lg border border-dashed p-10 text-center">
           <h2 className="text-base font-semibold">No vehicles yet</h2>
           <p className="mt-1 text-sm text-zinc-500">
             Add your first vehicle to start filling your shareable showroom.
@@ -41,9 +41,9 @@ export default async function InventoryPage() {
           </Link>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border-default bg-background">
+        <div className="border-border-default bg-background overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="border-b border-border-default text-xs uppercase tracking-wide text-zinc-500">
+            <thead className="border-border-default border-b text-xs tracking-wide text-zinc-500 uppercase">
               <tr>
                 <th className="px-4 py-3 text-left">Vehicle</th>
                 <th className="px-4 py-3 text-left">Price</th>
@@ -53,7 +53,7 @@ export default async function InventoryPage() {
                 <th className="px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-border-default">
+            <tbody className="divide-border-default divide-y">
               {listings.map((l) => (
                 <tr key={l.id}>
                   <td className="px-4 py-3">
@@ -66,7 +66,7 @@ export default async function InventoryPage() {
                           className="h-12 w-16 rounded object-cover"
                         />
                       ) : (
-                        <div className="h-12 w-16 rounded bg-surface-muted" />
+                        <div className="bg-surface-muted h-12 w-16 rounded" />
                       )}
                       <div>
                         <div className="font-medium">
@@ -89,7 +89,7 @@ export default async function InventoryPage() {
                   <td className="px-4 py-3 text-right">
                     <Link
                       href={`/dashboard/inventory/${l.id}/edit`}
-                      className="text-sm font-medium text-brand-red hover:underline"
+                      className="text-brand-red text-sm font-medium hover:underline"
                     >
                       Edit
                     </Link>

@@ -48,7 +48,7 @@ export default async function DashboardPage() {
             Your showroom link:{" "}
             <Link
               href={`/s/${dealer.store?.slug ?? ""}`}
-              className="font-medium text-brand-red hover:underline"
+              className="text-brand-red font-medium hover:underline"
             >
               /s/{dealer.store?.slug}
             </Link>
@@ -66,12 +66,12 @@ export default async function DashboardPage() {
         <Kpi label="Subscription" value={subLabel} small />
       </div>
 
-      <section className="rounded-lg border border-border-default bg-background">
-        <div className="flex items-center justify-between border-b border-border-default px-5 py-3">
+      <section className="border-border-default bg-background rounded-lg border">
+        <div className="border-border-default flex items-center justify-between border-b px-5 py-3">
           <h2 className="text-sm font-semibold">Recent leads</h2>
           <Link
             href="/dashboard/leads"
-            className="text-sm font-medium text-brand-red hover:underline"
+            className="text-brand-red text-sm font-medium hover:underline"
           >
             View all
           </Link>
@@ -81,7 +81,7 @@ export default async function DashboardPage() {
             No leads yet. Share your showroom link to start receiving enquiries.
           </div>
         ) : (
-          <ul className="divide-y divide-border-default">
+          <ul className="divide-border-default divide-y">
             {recentLeads.map((lead) => (
               <li key={lead.id} className="flex items-center justify-between px-5 py-3">
                 <div>
@@ -91,9 +91,7 @@ export default async function DashboardPage() {
                     {lead.buyerPhone}
                   </div>
                 </div>
-                <div className="text-xs text-zinc-500">
-                  {timeAgo(lead.createdAt)}
-                </div>
+                <div className="text-xs text-zinc-500">{timeAgo(lead.createdAt)}</div>
               </li>
             ))}
           </ul>
@@ -113,14 +111,12 @@ function Kpi({
   small?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-border-default bg-background p-4">
-      <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+    <div className="border-border-default bg-background rounded-lg border p-4">
+      <div className="text-xs font-medium tracking-wide text-zinc-500 uppercase">
         {label}
       </div>
       <div
-        className={`mt-1 font-bold tracking-tight ${
-          small ? "text-base" : "text-2xl"
-        }`}
+        className={`mt-1 font-bold tracking-tight ${small ? "text-base" : "text-2xl"}`}
       >
         {value}
       </div>

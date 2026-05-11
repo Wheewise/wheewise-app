@@ -5,10 +5,10 @@ import { signupDealer, type SignupState } from "@/lib/actions/auth";
 import { Field, Input, Button } from "@/components/ui/Field";
 
 export function DealerSignupForm() {
-  const [state, formAction, pending] = useActionState<
-    SignupState | undefined,
-    FormData
-  >(signupDealer, undefined);
+  const [state, formAction, pending] = useActionState<SignupState | undefined, FormData>(
+    signupDealer,
+    undefined,
+  );
   const errors = state && !state.ok ? state.errors : {};
 
   return (
@@ -33,7 +33,7 @@ export function DealerSignupForm() {
         label="Password"
         name="password"
         errors={errors.password}
-        hint="At least 8 characters."
+        hint="At least 8 characters, one uppercase, one lowercase, one digit, and one special character."
       >
         <Input
           id="password"

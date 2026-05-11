@@ -14,9 +14,9 @@ export default function DealerSignupPage() {
         </p>
       </div>
       <DealerSignupForm />
-      <div className="border-t border-border-default pt-4 text-sm text-zinc-500">
+      <div className="border-border-default border-t pt-4 text-sm text-zinc-500">
         Already a dealer?{" "}
-        <Link href="/login" className="font-medium text-brand-red hover:underline">
+        <Link href="/login" className="text-brand-red font-medium hover:underline">
           Sign in
         </Link>
       </div>

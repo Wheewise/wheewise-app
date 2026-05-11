@@ -14,10 +14,10 @@ export default function SignupPage() {
         </p>
       </div>
       <BuyerSignupForm />
-      <div className="border-t border-border-default pt-4 text-sm text-zinc-500 space-y-1">
+      <div className="border-border-default space-y-1 border-t pt-4 text-sm text-zinc-500">
         <div>
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-brand-red hover:underline">
+          <Link href="/login" className="text-brand-red font-medium hover:underline">
             Sign in
           </Link>
         </div>
@@ -25,7 +25,7 @@ export default function SignupPage() {
           Are you a dealer?{" "}
           <Link
             href="/signup/dealer"
-            className="font-medium text-brand-red hover:underline"
+            className="text-brand-red font-medium hover:underline"
           >
             Join as a dealer
           </Link>

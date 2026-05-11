@@ -12,10 +12,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   if (!razorpay) {
-    return NextResponse.json(
-      { error: "Billing not configured" },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: "Billing not configured" }, { status: 503 });
   }
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
@@ -34,10 +31,7 @@ export async function POST(req: Request) {
   const plan = parsed.data.plan as RazorpayPlanTier;
   const planId = PLAN_IDS[plan];
   if (!planId) {
-    return NextResponse.json(
-      { error: "Plan not configured" },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: "Plan not configured" }, { status: 503 });
   }
 
   const sub = await razorpay.subscriptions.create({

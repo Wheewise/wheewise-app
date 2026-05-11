@@ -18,8 +18,7 @@ export function StoreForm({ defaults }: { defaults: Defaults }) {
     updateStore,
     undefined,
   );
-  const errors =
-    state && "ok" in state && state.ok === false ? state.errors : {};
+  const errors = state && "ok" in state && state.ok === false ? state.errors : {};
   const [color, setColor] = useState(defaults.primaryColor);
 
   return (
@@ -30,8 +29,7 @@ export function StoreForm({ defaults }: { defaults: Defaults }) {
         errors={errors.slug}
         hint={
           <>
-            Your shareable link:{" "}
-            <span className="font-mono">/s/{defaults.slug}</span>
+            Your shareable link: <span className="font-mono">/s/{defaults.slug}</span>
           </>
         }
       >
@@ -51,7 +49,7 @@ export function StoreForm({ defaults }: { defaults: Defaults }) {
           rows={4}
           defaultValue={defaults.bio}
           maxLength={500}
-          className="block w-full rounded-md border border-border-default bg-background px-3 py-2 text-sm shadow-xs outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20"
+          className="border-border-default bg-background focus:border-brand-red focus:ring-brand-red/20 block w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus:ring-2"
           placeholder="Tell buyers what makes your showroom different."
         />
       </Field>
@@ -67,7 +65,7 @@ export function StoreForm({ defaults }: { defaults: Defaults }) {
             type="color"
             value={color}
             onChange={(e) => setColor(e.target.value)}
-            className="h-10 w-14 cursor-pointer rounded border border-border-default"
+            className="border-border-default h-10 w-14 cursor-pointer rounded border"
           />
           <Input
             id="primaryColor"
@@ -99,7 +97,7 @@ export function StoreForm({ defaults }: { defaults: Defaults }) {
       </div>
 
       {state && "ok" in state && state.ok === false && state.formError ? (
-        <p className="rounded-md bg-brand-red/10 px-3 py-2 text-sm text-brand-red">
+        <p className="bg-brand-red/10 text-brand-red rounded-md px-3 py-2 text-sm">
           {state.formError}
         </p>
       ) : null}

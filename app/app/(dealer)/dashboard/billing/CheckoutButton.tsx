@@ -72,9 +72,7 @@ export function CheckoutButton({
       >
         {busy ? "Loading…" : "Subscribe"}
       </Button>
-      {error ? (
-        <p className="mt-2 text-xs text-brand-red">{error}</p>
-      ) : null}
+      {error ? <p className="text-brand-red mt-2 text-xs">{error}</p> : null}
     </>
   );
 }

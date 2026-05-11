@@ -13,13 +13,7 @@ export function LoginForm() {
   return (
     <form action={formAction} className="space-y-4">
       <Field label="Email" name="email">
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-        />
+        <Input id="email" name="email" type="email" autoComplete="email" required />
       </Field>
       <Field label="Password" name="password">
         <Input
@@ -31,7 +25,7 @@ export function LoginForm() {
         />
       </Field>
       {state?.ok === false ? (
-        <p className="rounded-md bg-brand-red/10 px-3 py-2 text-sm text-brand-red">
+        <p className="bg-brand-red/10 text-brand-red rounded-md px-3 py-2 text-sm">
           {state.error}
         </p>
       ) : null}

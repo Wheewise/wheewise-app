@@ -135,24 +135,14 @@ async function main() {
   await prisma.listing.deleteMany({ where: { dealerId: dealer.id } });
 
   const seedPhotoUrls: Record<string, string[]> = {
-    "Swift VXi": [
-      "https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=1200",
-    ],
-    "Creta SX": [
-      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200",
-    ],
-    "City ZX": [
-      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=1200",
-    ],
+    "Swift VXi": ["https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=1200"],
+    "Creta SX": ["https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200"],
+    "City ZX": ["https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=1200"],
     "Nexon EV Max": [
       "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=1200",
     ],
-    "Classic 350": [
-      "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=1200",
-    ],
-    "Duke 390": [
-      "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=1200",
-    ],
+    "Classic 350": ["https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=1200"],
+    "Duke 390": ["https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=1200"],
   };
 
   for (const l of listings) {

@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import {
-  verifyWebhookSignature,
-  type RazorpayWebhookEvent,
-} from "@/lib/razorpay";
+import { verifyWebhookSignature, type RazorpayWebhookEvent } from "@/lib/razorpay";
 
 const STATUS_MAP: Record<string, "ACTIVE" | "PAST_DUE" | "CANCELLED" | "TRIALING"> = {
   active: "ACTIVE",
@@ -42,9 +39,7 @@ export async function POST(req: Request) {
     where: { razorpaySubId: sub.id },
     data: {
       status: mapped,
-      ...(sub.current_end
-        ? { currentPeriodEnd: new Date(sub.current_end * 1000) }
-        : {}),
+      ...(sub.current_end ? { currentPeriodEnd: new Date(sub.current_end * 1000) } : {}),
     },
   });
 

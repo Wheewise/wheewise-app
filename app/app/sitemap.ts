@@ -16,10 +16,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       orderBy: { updatedAt: "desc" },
       take: 5000,
     }),
-  ]).catch(() => [[], []] as [
-    { slug: string; updatedAt: Date }[],
-    { id: string; updatedAt: Date }[],
-  ]);
+  ]).catch(
+    () =>
+      [[], []] as [
+        { slug: string; updatedAt: Date }[],
+        { id: string; updatedAt: Date }[],
+      ],
+  );
 
   const staticUrls: MetadataRoute.Sitemap = [
     { url: `${BASE}/`, changeFrequency: "weekly", priority: 1 },

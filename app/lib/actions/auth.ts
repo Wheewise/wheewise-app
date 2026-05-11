@@ -6,10 +6,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { signIn } from "@/lib/auth";
 
+import { passwordRule } from "@/lib/password";
+
 const buyerSignupSchema = z.object({
   name: z.string().min(2, "Name is too short"),
   email: z.string().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: passwordRule,
 });
 
 const dealerSignupSchema = buyerSignupSchema.extend({
@@ -22,9 +24,7 @@ const dealerSignupSchema = buyerSignupSchema.extend({
   whatsapp: z.string().optional(),
 });
 
-export type SignupState =
-  | { ok: false; errors: Record<string, string[]> }
-  | { ok: true };
+export type SignupState = { ok: false; errors: Record<string, string[]> } | { ok: true };
 
 function flattenErrors(error: z.ZodError): Record<string, string[]> {
   return z.flattenError(error).fieldErrors;

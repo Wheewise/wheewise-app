@@ -20,9 +20,9 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
   return (
     <Link
       href={`/vehicle/${listing.id}`}
-      className="group block overflow-hidden rounded-lg border border-border-default bg-background transition-shadow hover:shadow-md"
+      className="group border-border-default bg-background block overflow-hidden rounded-lg border transition-shadow hover:shadow-md"
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-surface-muted">
+      <div className="bg-surface-muted relative aspect-[4/3] overflow-hidden">
         {listing.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -33,7 +33,7 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
         ) : null}
         {sold ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <span className="rounded-md bg-brand-red px-3 py-1 text-sm font-bold uppercase text-white">
+            <span className="bg-brand-red rounded-md px-3 py-1 text-sm font-bold text-white uppercase">
               Sold
             </span>
           </div>
@@ -52,7 +52,7 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
           {" · "}
           {listing.city}
         </div>
-        <div className="mt-3 text-lg font-bold text-brand-red">
+        <div className="text-brand-red mt-3 text-lg font-bold">
           {formatINR(listing.askingPrice)}
         </div>
       </div>

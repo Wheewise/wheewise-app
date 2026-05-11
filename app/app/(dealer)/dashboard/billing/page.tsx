@@ -14,11 +14,7 @@ const plans = [
     name: "Yearly",
     price: "₹9,999",
     cadence: "per year",
-    features: [
-      "Everything in Monthly",
-      "Save ₹1,989 vs monthly",
-      "Priority support",
-    ],
+    features: ["Everything in Monthly", "Save ₹1,989 vs monthly", "Priority support"],
     highlight: true,
   },
 ];
@@ -32,24 +28,21 @@ export default async function BillingPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Manage your Wheewise subscription.
-        </p>
+        <p className="mt-1 text-sm text-zinc-500">Manage your Wheewise subscription.</p>
       </div>
 
       {blocked ? (
-        <div className="rounded-lg border border-brand-red/40 bg-brand-red/5 p-4 text-sm text-brand-red">
-          Your subscription is{" "}
-          {sub?.status === "PAST_DUE" ? "past due" : "cancelled"}. Renew to
-          regain full dashboard access — your storefront stays paused until
+        <div className="border-brand-red/40 bg-brand-red/5 text-brand-red rounded-lg border p-4 text-sm">
+          Your subscription is {sub?.status === "PAST_DUE" ? "past due" : "cancelled"}.
+          Renew to regain full dashboard access — your storefront stays paused until
           payment is complete.
         </div>
       ) : null}
 
-      <section className="rounded-lg border border-border-default bg-background p-6">
+      <section className="border-border-default bg-background rounded-lg border p-6">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <div className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
               Current plan
             </div>
             <div className="mt-1 text-xl font-bold">

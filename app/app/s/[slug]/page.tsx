@@ -25,7 +25,8 @@ export async function generateMetadata({
   if (!store) return { title: "Showroom not found" };
   const title = `${store.dealer.businessName} — Wheewise showroom`;
   const description =
-    store.bio ?? `Pre-owned vehicles from ${store.dealer.businessName} in ${store.dealer.city}.`;
+    store.bio ??
+    `Pre-owned vehicles from ${store.dealer.businessName} in ${store.dealer.city}.`;
   return {
     title,
     description,
@@ -57,9 +58,7 @@ export default async function StorefrontPage({
     where: {
       dealerId: store.dealerId,
       status: { in: ["ACTIVE", "SOLD"] },
-      ...(sp.type === "CAR" || sp.type === "BIKE"
-        ? { vehicleType: sp.type }
-        : {}),
+      ...(sp.type === "CAR" || sp.type === "BIKE" ? { vehicleType: sp.type } : {}),
       ...(sp.fuel
         ? { fuelType: sp.fuel as "PETROL" | "DIESEL" | "CNG" | "ELECTRIC" | "HYBRID" }
         : {}),
@@ -86,33 +85,25 @@ export default async function StorefrontPage({
   const accent = store.primaryColor;
 
   return (
-    <div className="min-h-screen bg-surface-muted">
+    <div className="bg-surface-muted min-h-screen">
       <div
-        className="relative h-44 w-full overflow-hidden bg-brand-ink sm:h-64"
+        className="bg-brand-ink relative h-44 w-full overflow-hidden sm:h-64"
         style={{ backgroundColor: store.bannerUrl ? undefined : accent }}
       >
         {store.bannerUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={store.bannerUrl}
-            alt=""
-            className="h-full w-full object-cover"
-          />
+          <img src={store.bannerUrl} alt="" className="h-full w-full object-cover" />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-b from-black/0 to-black/40" />
       </div>
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <header className="-mt-12 flex flex-col gap-4 rounded-lg border border-border-default bg-background p-5 sm:flex-row sm:items-center sm:gap-6">
+        <header className="border-border-default bg-background -mt-12 flex flex-col gap-4 rounded-lg border p-5 sm:flex-row sm:items-center sm:gap-6">
           <div className="flex items-center gap-4">
-            <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-border-default bg-surface-muted">
+            <div className="border-border-default bg-surface-muted h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border">
               {store.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={store.logoUrl}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
+                <img src={store.logoUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <div
                   className="flex h-full w-full items-center justify-center text-2xl font-bold text-white"
@@ -123,9 +114,7 @@ export default async function StorefrontPage({
               )}
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">
-                {dealer.businessName}
-              </h1>
+              <h1 className="text-2xl font-bold tracking-tight">{dealer.businessName}</h1>
               <p className="text-sm text-zinc-500">{dealer.city}</p>
             </div>
           </div>
@@ -152,34 +141,34 @@ export default async function StorefrontPage({
         </header>
 
         {store.bio ? (
-          <p className="mt-4 rounded-lg border border-border-default bg-background p-4 text-sm text-zinc-700">
+          <p className="border-border-default bg-background mt-4 rounded-lg border p-4 text-sm text-zinc-700">
             {store.bio}
           </p>
         ) : null}
 
         <form
           method="get"
-          className="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-border-default bg-background p-4"
+          className="border-border-default bg-background mt-6 flex flex-wrap items-end gap-3 rounded-lg border p-4"
         >
           <div className="min-w-[180px] flex-1">
-            <label className="block text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <label className="block text-xs font-medium tracking-wide text-zinc-500 uppercase">
               Search
             </label>
             <input
               name="q"
               defaultValue={sp.q ?? ""}
               placeholder="Make or model"
-              className="mt-1 block w-full rounded-md border border-border-default bg-background px-3 py-2 text-sm"
+              className="border-border-default bg-background mt-1 block w-full rounded-md border px-3 py-2 text-sm"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <label className="block text-xs font-medium tracking-wide text-zinc-500 uppercase">
               Type
             </label>
             <select
               name="type"
               defaultValue={sp.type ?? ""}
-              className="mt-1 block rounded-md border border-border-default bg-background px-3 py-2 text-sm"
+              className="border-border-default bg-background mt-1 block rounded-md border px-3 py-2 text-sm"
             >
               <option value="">All</option>
               <option value="CAR">Cars</option>
@@ -187,13 +176,13 @@ export default async function StorefrontPage({
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <label className="block text-xs font-medium tracking-wide text-zinc-500 uppercase">
               Fuel
             </label>
             <select
               name="fuel"
               defaultValue={sp.fuel ?? ""}
-              className="mt-1 block rounded-md border border-border-default bg-background px-3 py-2 text-sm"
+              className="border-border-default bg-background mt-1 block rounded-md border px-3 py-2 text-sm"
             >
               <option value="">All</option>
               <option value="PETROL">Petrol</option>
@@ -214,7 +203,7 @@ export default async function StorefrontPage({
 
         <section className="py-8">
           {listings.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border-default bg-background p-10 text-center text-sm text-zinc-500">
+            <div className="border-border-default bg-background rounded-lg border border-dashed p-10 text-center text-sm text-zinc-500">
               No vehicles match your filters.
             </div>
           ) : (
@@ -241,9 +230,9 @@ export default async function StorefrontPage({
           )}
         </section>
 
-        <footer className="border-t border-border-default py-6 text-center text-xs text-zinc-500">
+        <footer className="border-border-default border-t py-6 text-center text-xs text-zinc-500">
           Showroom powered by{" "}
-          <Link href="/" className="font-semibold text-brand-red">
+          <Link href="/" className="text-brand-red font-semibold">
             Wheewise
           </Link>
         </footer>
