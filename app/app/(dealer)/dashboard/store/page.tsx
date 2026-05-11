@@ -22,6 +22,8 @@ export default async function StorePage() {
             primaryColor: dealer.store.primaryColor,
             logoUrl: dealer.store.logoUrl ?? "",
             bannerUrl: dealer.store.bannerUrl ?? "",
+            gstin: dealer.gstin,
+            gstVerified: dealer.gstVerified,
           }}
         />
       </div>

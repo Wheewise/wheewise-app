@@ -15,6 +15,7 @@ export type ListingCardData = {
   city: string;
   status: string;
   coverUrl?: string;
+  isBoosted?: boolean;
 };
 
 export function ListingCard({ listing }: { listing: ListingCardData }) {
@@ -40,8 +41,15 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
           ) : null}
         </div>
         <div className="p-4 pb-2">
-          <div className="text-base font-semibold">
-            {listing.year} {listing.make} {listing.model}
+          <div className="flex items-center gap-2">
+            <span className="text-base font-semibold">
+              {listing.year} {listing.make} {listing.model}
+            </span>
+            {listing.isBoosted ? (
+              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 uppercase">
+                Featured
+              </span>
+            ) : null}
           </div>
           <div className="mt-1 text-xs text-zinc-500">
             {formatNumber(listing.odometerKm)} km ·{" "}

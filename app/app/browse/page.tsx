@@ -65,7 +65,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
     prisma.listing.findMany({
       where,
       include: { photos: { take: 1, orderBy: { sortOrder: "asc" } } },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
@@ -205,6 +205,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
                     city: l.city,
                     status: l.status,
                     coverUrl: l.photos[0]?.url,
+                    isBoosted: l.isBoosted,
                   }}
                 />
               ))}

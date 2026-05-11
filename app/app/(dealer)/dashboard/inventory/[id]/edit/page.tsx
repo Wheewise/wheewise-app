@@ -5,6 +5,7 @@ import { requireDealer } from "@/lib/dealer";
 import { updateListing } from "@/lib/actions/listings";
 import { ListingForm } from "@/components/listings/ListingForm";
 import { ListingActions } from "./ListingActions";
+import { BoostButton } from "@/components/listings/BoostButton";
 
 export default async function EditListingPage({
   params,
@@ -40,6 +41,14 @@ export default async function EditListingPage({
           </p>
         </div>
         <ListingActions listingId={listing.id} status={listing.status} />
+      </div>
+
+      <div className="border-border-default bg-background rounded-lg border p-4">
+        <BoostButton
+          listingId={listing.id}
+          isBoosted={listing.isBoosted}
+          boostExpiresAt={listing.boostExpiresAt}
+        />
       </div>
 
       <div className="border-border-default bg-background rounded-lg border p-6">

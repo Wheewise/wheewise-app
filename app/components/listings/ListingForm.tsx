@@ -39,6 +39,8 @@ export function ListingForm({
   const [model, setModel] = useState(defaults.model ?? "");
   const [year, setYear] = useState(defaults.year?.toString() ?? "");
   const [fuelType, setFuelType] = useState(defaults.fuelType ?? "PETROL");
+  const [description, setDescription] = useState(defaults.description ?? "");
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   const handleRtoFetched = useCallback(
     (data: { make: string; model: string; year: number; fuelType: string }) => {
@@ -49,6 +51,41 @@ export function ListingForm({
     },
     [],
   );
+
+  const handleGenerateAi = useCallback(async () => {
+    setAiGenerating(true);
+    try {
+      const res = await fetch("/api/ai/generate-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vehicleType:
+            (document.getElementById("vehicleType") as HTMLSelectElement)?.value ?? "CAR",
+          make,
+          model,
+          year: Number(year),
+          fuelType,
+          transmission:
+            (document.getElementById("transmission") as HTMLSelectElement)?.value ?? null,
+          odometerKm: Number(
+            (document.getElementById("odometerKm") as HTMLInputElement)?.value ?? 0,
+          ),
+          askingPrice: Number(
+            (document.getElementById("askingPrice") as HTMLInputElement)?.value ?? 0,
+          ),
+          city: (document.getElementById("city") as HTMLInputElement)?.value ?? "",
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDescription(data.description);
+      }
+    } catch {
+      // silently fail, keep mock descriptions
+    } finally {
+      setAiGenerating(false);
+    }
+  }, [make, model, year, fuelType]);
 
   const errors = state && "ok" in state && state.ok === false ? state.errors : {};
 
@@ -167,14 +204,38 @@ export function ListingForm({
       </Field>
 
       <Field label="Description" name="description" errors={errors.description}>
-        <textarea
-          id="description"
-          name="description"
-          rows={5}
-          defaultValue={defaults.description}
-          className={select}
-          required
-        />
+        <div className="space-y-2">
+          <textarea
+            id="description"
+            name="description"
+            rows={5}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className={select}
+            required
+          />
+          <button
+            type="button"
+            onClick={handleGenerateAi}
+            disabled={aiGenerating || !make || !model}
+            className="inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+            {aiGenerating ? "Generating…" : "Generate with AI"}
+          </button>
+        </div>
       </Field>
 
       <div>

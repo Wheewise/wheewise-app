@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useCallback } from "react";
 import { Field, Input, Button } from "@/components/ui/Field";
 import { updateStore, type StoreActionState } from "@/lib/actions/store";
 import { SingleImageUploader } from "@/components/listings/SingleImageUploader";
@@ -11,6 +11,8 @@ type Defaults = {
   primaryColor: string;
   logoUrl: string;
   bannerUrl: string;
+  gstin?: string | null;
+  gstVerified?: boolean;
 };
 
 export function StoreForm({ defaults }: { defaults: Defaults }) {
@@ -20,6 +22,26 @@ export function StoreForm({ defaults }: { defaults: Defaults }) {
   );
   const errors = state && "ok" in state && state.ok === false ? state.errors : {};
   const [color, setColor] = useState(defaults.primaryColor);
+  const [gstin, setGstin] = useState(defaults.gstin ?? "");
+  const [gstVerified, setGstVerified] = useState(defaults.gstVerified ?? false);
+  const [gstVerifying, setGstVerifying] = useState(false);
+
+  const verifyGst = useCallback(async () => {
+    if (!gstin.trim()) return;
+    setGstVerifying(true);
+    try {
+      const res = await fetch("/api/gst/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gstin: gstin.trim() }),
+      });
+      if (res.ok) setGstVerified(true);
+    } catch {
+      // keep unverified
+    } finally {
+      setGstVerifying(false);
+    }
+  }, [gstin]);
 
   return (
     <form action={formAction} className="space-y-6">
@@ -52,6 +74,39 @@ export function StoreForm({ defaults }: { defaults: Defaults }) {
           className="border-border-default bg-background focus:border-brand-red focus:ring-brand-red/20 block w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus:ring-2"
           placeholder="Tell buyers what makes your showroom different."
         />
+      </Field>
+
+      <Field
+        label="GSTIN"
+        name="gstin"
+        errors={errors.gstin}
+        hint={
+          gstVerified
+            ? "✓ GST verified"
+            : "Enter your GSTIN to get a verified badge on your storefront."
+        }
+      >
+        <div className="flex gap-2">
+          <Input
+            id="gstin"
+            name="gstin"
+            value={gstin}
+            onChange={(e) => {
+              setGstin(e.target.value);
+              setGstVerified(false);
+            }}
+            placeholder="22AAAAA0000A1Z5"
+            className="font-mono"
+          />
+          <button
+            type="button"
+            onClick={verifyGst}
+            disabled={gstVerifying || gstin.trim().length < 15 || gstVerified}
+            className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {gstVerified ? "✓" : gstVerifying ? "…" : "Verify"}
+          </button>
+        </div>
       </Field>
 
       <Field

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { compressImage } from "@/lib/image";
 
 type Photo = { url: string; uploading?: boolean; error?: string };
 
@@ -15,13 +16,14 @@ export function PhotoUploader({
   const fileInput = useRef<HTMLInputElement>(null);
 
   async function uploadOne(file: File): Promise<string> {
-    const ext = file.name.split(".").pop() ?? "jpg";
+    const compressed = await compressImage(file);
+    const ext = "webp";
     const presignRes = await fetch("/api/uploads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contentType: file.type,
-        size: file.size,
+        contentType: "image/webp",
+        size: compressed.size,
         ext,
       }),
     });
@@ -35,8 +37,8 @@ export function PhotoUploader({
     };
     const put = await fetch(uploadUrl, {
       method: "PUT",
-      headers: { "Content-Type": file.type },
-      body: file,
+      headers: { "Content-Type": "image/webp" },
+      body: compressed,
     });
     if (!put.ok) throw new Error("Upload failed");
     return publicUrl;

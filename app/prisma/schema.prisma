@@ -83,6 +83,8 @@ model Dealer {
   city         String
   phone        String
   whatsapp     String?
+  gstin        String?
+  gstVerified   Boolean       @default(false)
   status       DealerStatus @default(ACTIVE)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
@@ -125,10 +127,12 @@ model Listing {
   askingPrice   Decimal       @db.Decimal(12, 2)
   description   String        @db.Text
   city          String
-  status        ListingStatus @default(ACTIVE)
-  viewCount     Int           @default(0)
-  enquiryCount  Int           @default(0)
-  createdAt     DateTime      @default(now())
+  status         ListingStatus @default(ACTIVE)
+  viewCount      Int           @default(0)
+  enquiryCount   Int           @default(0)
+  isBoosted      Boolean       @default(false)
+  boostExpiresAt DateTime?
+  createdAt      DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
   photos    ListingPhoto[]
