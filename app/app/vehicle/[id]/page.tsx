@@ -7,6 +7,7 @@ import { formatINR, formatNumber } from "@/lib/format";
 import { whatsappLink } from "@/lib/whatsapp";
 import { EnquiryForm } from "./EnquiryForm";
 import { PhotoGallery } from "./PhotoGallery";
+import { EmiCalculator } from "@/components/vehicle/EmiCalculator";
 import { incrementViewCount } from "./view-actions";
 
 type Params = Promise<{ id: string }>;
@@ -163,6 +164,16 @@ export default async function VehiclePage({ params }: { params: Params }) {
               </p>
               <div className="mt-3">
                 <EnquiryForm listingId={listing.id} defaults={buyerDefaults} />
+              </div>
+            </div>
+
+            <div className="border-border-default bg-background rounded-lg border p-5">
+              <h3 className="text-sm font-semibold">EMI Calculator</h3>
+              <p className="mt-1 text-xs text-zinc-500">
+                Adjust the sliders to estimate your monthly payment.
+              </p>
+              <div className="mt-3">
+                <EmiCalculator price={Number(listing.askingPrice)} />
               </div>
             </div>
           </aside>

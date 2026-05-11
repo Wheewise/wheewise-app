@@ -18,6 +18,17 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const role = req.auth?.user?.role;
 
+  if (nextUrl.pathname.startsWith("/admin")) {
+    if (!isLoggedIn) {
+      const url = new URL("/login", nextUrl);
+      url.searchParams.set("callbackUrl", nextUrl.pathname + nextUrl.search);
+      return withSecurityHeaders(NextResponse.redirect(url));
+    }
+    if (role !== "ADMIN") {
+      return withSecurityHeaders(NextResponse.redirect(new URL("/", nextUrl)));
+    }
+  }
+
   if (nextUrl.pathname.startsWith("/dashboard")) {
     if (!isLoggedIn) {
       const url = new URL("/login", nextUrl);
@@ -33,5 +44,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/admin/:path*", "/dashboard/:path*"],
 };
