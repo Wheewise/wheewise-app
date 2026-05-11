@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useCallback } from "react";
 import { Field, Input, Button } from "@/components/ui/Field";
 import { PhotoUploader } from "./PhotoUploader";
+import { RtoLookup } from "./RtoLookup";
 import { FUEL_TYPES, TRANSMISSIONS, VEHICLE_TYPES } from "@/lib/validators/listing";
 import type { ListingActionState } from "@/lib/actions/listings";
 
@@ -34,6 +35,21 @@ export function ListingForm({
     undefined,
   );
 
+  const [make, setMake] = useState(defaults.make ?? "");
+  const [model, setModel] = useState(defaults.model ?? "");
+  const [year, setYear] = useState(defaults.year?.toString() ?? "");
+  const [fuelType, setFuelType] = useState(defaults.fuelType ?? "PETROL");
+
+  const handleRtoFetched = useCallback(
+    (data: { make: string; model: string; year: number; fuelType: string }) => {
+      setMake(data.make);
+      setModel(data.model);
+      setYear(String(data.year));
+      setFuelType(data.fuelType);
+    },
+    [],
+  );
+
   const errors = state && "ok" in state && state.ok === false ? state.errors : {};
 
   const select =
@@ -41,6 +57,8 @@ export function ListingForm({
 
   return (
     <form action={formAction} className="space-y-6">
+      <RtoLookup onFetched={handleRtoFetched} />
+
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Vehicle type" name="vehicleType" errors={errors.vehicleType}>
           <select
@@ -63,10 +81,22 @@ export function ListingForm({
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label="Make" name="make" errors={errors.make}>
-          <Input id="make" name="make" defaultValue={defaults.make} required />
+          <Input
+            id="make"
+            name="make"
+            value={make}
+            onChange={(e) => setMake(e.target.value)}
+            required
+          />
         </Field>
         <Field label="Model" name="model" errors={errors.model}>
-          <Input id="model" name="model" defaultValue={defaults.model} required />
+          <Input
+            id="model"
+            name="model"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            required
+          />
         </Field>
         <Field label="Year" name="year" errors={errors.year}>
           <Input
@@ -75,7 +105,8 @@ export function ListingForm({
             type="number"
             min={1980}
             max={new Date().getFullYear() + 1}
-            defaultValue={defaults.year}
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
             required
           />
         </Field>
@@ -86,7 +117,8 @@ export function ListingForm({
           <select
             id="fuelType"
             name="fuelType"
-            defaultValue={defaults.fuelType ?? "PETROL"}
+            value={fuelType}
+            onChange={(e) => setFuelType(e.target.value)}
             className={select}
           >
             {FUEL_TYPES.map((f) => (

@@ -8,6 +8,8 @@ import { whatsappLink } from "@/lib/whatsapp";
 import { EnquiryForm } from "./EnquiryForm";
 import { PhotoGallery } from "./PhotoGallery";
 import { EmiCalculator } from "@/components/vehicle/EmiCalculator";
+import { SaveButton } from "@/components/vehicle/SaveButton";
+import { CompareButton } from "@/components/vehicle/CompareButton";
 import { incrementViewCount } from "./view-actions";
 
 type Params = Promise<{ id: string }>;
@@ -154,6 +156,10 @@ export default async function VehiclePage({ params }: { params: Params }) {
                 >
                   Call now
                 </a>
+              </div>
+              <div className="mt-4 flex items-center justify-between border-t pt-4">
+                <SaveButton listingId={listing.id} />
+                <CompareButton listingId={listing.id} />
               </div>
             </div>
 

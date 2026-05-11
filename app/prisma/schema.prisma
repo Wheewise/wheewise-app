@@ -25,10 +25,11 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  dealer    Dealer?
-  enquiries Enquiry[]
-  sessions  Session[]
-  accounts  Account[]
+  dealer        Dealer?
+  enquiries     Enquiry[]
+  sessions      Session[]
+  accounts      Account[]
+  savedListings SavedListing[]
 }
 
 // NextAuth Prisma adapter tables (kept minimal — Credentials provider
@@ -129,6 +130,7 @@ model Listing {
 
   photos    ListingPhoto[]
   enquiries Enquiry[]
+  savedBy   SavedListing[]
 
   @@index([city, vehicleType, status])
   @@index([dealerId, status])
@@ -169,6 +171,22 @@ model Enquiry {
 
   @@index([dealerId, isRead, priority, createdAt])
   @@index([listingId, createdAt])
+}
+
+// =============================================================
+// Saved (wishlist)
+// =============================================================
+
+model SavedListing {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+  @@index([userId])
 }
 
 // =============================================================
