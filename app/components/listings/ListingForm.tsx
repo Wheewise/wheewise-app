@@ -3,6 +3,7 @@
 import { useActionState, useState, useCallback } from "react";
 import { Field, Input, Button } from "@/components/ui/Field";
 import { PhotoUploader } from "./PhotoUploader";
+import { Photo360Uploader } from "./Photo360Uploader";
 import { RtoLookup } from "./RtoLookup";
 import { FUEL_TYPES, TRANSMISSIONS, VEHICLE_TYPES } from "@/lib/validators/listing";
 import type { ListingActionState } from "@/lib/actions/listings";
@@ -244,6 +245,14 @@ export function ListingForm({
           {errors.photoUrls?.[0] ?? "At least one photo required."}
         </p>
         <PhotoUploader initialPhotos={defaults.photoUrls ?? []} />
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm font-semibold">360° Spin Photos (optional)</p>
+        <p className="mb-2 text-xs text-zinc-500">
+          Upload 24 evenly-spaced photos for a 360° interactive view.
+        </p>
+        <Photo360Uploader />
       </div>
 
       {state && "ok" in state && state.ok === false && state.formError ? (

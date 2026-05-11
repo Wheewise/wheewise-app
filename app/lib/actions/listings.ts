@@ -13,20 +13,36 @@ export type ListingActionState =
 
 function parseFromForm(formData: FormData) {
   const photoUrls = formData.getAll("photoUrls").map(String).filter(Boolean);
+  const photo360Raw = formData.getAll("photo360Urls").map(String).filter(Boolean);
+  const photo360 = photo360Raw
+    .map((s) => {
+      try {
+        const { url, angle } = JSON.parse(s) as { url: string; angle: number };
+        if (typeof url === "string" && typeof angle === "number") return { url, angle };
+      } catch {
+        // ignore malformed
+      }
+      return null;
+    })
+    .filter(Boolean) as { url: string; angle: number }[];
+
   const transmissionRaw = formData.get("transmission");
-  return listingSchema.safeParse({
-    vehicleType: formData.get("vehicleType"),
-    make: formData.get("make"),
-    model: formData.get("model"),
-    year: formData.get("year"),
-    fuelType: formData.get("fuelType"),
-    transmission: transmissionRaw ? transmissionRaw : undefined,
-    odometerKm: formData.get("odometerKm"),
-    askingPrice: formData.get("askingPrice"),
-    description: formData.get("description"),
-    city: formData.get("city"),
-    photoUrls,
-  });
+  return {
+    parsed: listingSchema.safeParse({
+      vehicleType: formData.get("vehicleType"),
+      make: formData.get("make"),
+      model: formData.get("model"),
+      year: formData.get("year"),
+      fuelType: formData.get("fuelType"),
+      transmission: transmissionRaw ? transmissionRaw : undefined,
+      odometerKm: formData.get("odometerKm"),
+      askingPrice: formData.get("askingPrice"),
+      description: formData.get("description"),
+      city: formData.get("city"),
+      photoUrls,
+    }),
+    photo360,
+  };
 }
 
 export async function createListing(
@@ -34,7 +50,7 @@ export async function createListing(
   formData: FormData,
 ): Promise<ListingActionState> {
   const { dealer } = await requireDealer();
-  const parsed = parseFromForm(formData);
+  const { parsed, photo360 } = parseFromForm(formData);
   if (!parsed.success) {
     return {
       ok: false,
@@ -50,6 +66,10 @@ export async function createListing(
       photos: {
         create: photoUrls.map((url, i) => ({ url, sortOrder: i })),
       },
+      photos360:
+        photo360.length > 0
+          ? { create: photo360.map((p) => ({ url: p.url, angle: p.angle })) }
+          : undefined,
     },
   });
 
@@ -71,7 +91,7 @@ export async function updateListing(
   });
   if (!existing) return { ok: false, errors: {}, formError: "Listing not found" };
 
-  const parsed = parseFromForm(formData);
+  const { parsed, photo360 } = parseFromForm(formData);
   if (!parsed.success) {
     return {
       ok: false,
@@ -89,6 +109,14 @@ export async function updateListing(
     prisma.listingPhoto.createMany({
       data: photoUrls.map((url, i) => ({ listingId, url, sortOrder: i })),
     }),
+    prisma.listing360Photo.deleteMany({ where: { listingId } }),
+    ...(photo360.length > 0
+      ? [
+          prisma.listing360Photo.createMany({
+            data: photo360.map((p) => ({ listingId, url: p.url, angle: p.angle })),
+          }),
+        ]
+      : []),
   ]);
 
   revalidatePath("/dashboard");

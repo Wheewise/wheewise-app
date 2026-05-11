@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { formatINR, formatNumber } from "@/lib/format";
 import { whatsappLink } from "@/lib/whatsapp";
 import { EnquiryForm } from "./EnquiryForm";
-import { PhotoGallery } from "./PhotoGallery";
+import { PhotoViewer } from "./PhotoViewer";
 import { EmiCalculator } from "@/components/vehicle/EmiCalculator";
 import { SaveButton } from "@/components/vehicle/SaveButton";
 import { CompareButton } from "@/components/vehicle/CompareButton";
@@ -44,6 +44,7 @@ export default async function VehiclePage({ params }: { params: Params }) {
     where: { id },
     include: {
       photos: { orderBy: { sortOrder: "asc" } },
+      photos360: { orderBy: { angle: "asc" } },
       dealer: { include: { store: true } },
     },
   });
@@ -78,7 +79,10 @@ export default async function VehiclePage({ params }: { params: Params }) {
 
         <div className="mt-4 grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <PhotoGallery photos={listing.photos.map((p) => p.url)} />
+            <PhotoViewer
+              photos={listing.photos.map((p) => p.url)}
+              photos360={listing.photos360.map((p) => p.url)}
+            />
 
             <div className="border-border-default bg-background mt-6 rounded-lg border p-6">
               <h1 className="text-2xl font-bold tracking-tight">{vehicle}</h1>

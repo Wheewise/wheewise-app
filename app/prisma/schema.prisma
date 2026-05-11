@@ -138,6 +138,7 @@ model Listing {
   updatedAt     DateTime      @updatedAt
 
   photos    ListingPhoto[]
+  photos360 Listing360Photo[]
   enquiries Enquiry[]
   savedBy       SavedListing[]
   conversations Conversation[]
@@ -155,6 +156,17 @@ model ListingPhoto {
   sortOrder Int     @default(0)
 
   @@index([listingId, sortOrder])
+}
+
+model Listing360Photo {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url       String
+  angle     Int
+  createdAt DateTime @default(now())
+
+  @@index([listingId, angle])
 }
 
 // =============================================================
