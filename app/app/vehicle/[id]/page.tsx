@@ -10,6 +10,7 @@ import { PhotoViewer } from "./PhotoViewer";
 import { EmiCalculator } from "@/components/vehicle/EmiCalculator";
 import { SaveButton } from "@/components/vehicle/SaveButton";
 import { CompareButton } from "@/components/vehicle/CompareButton";
+import { LoanApplyForm } from "@/components/vehicle/LoanApplyForm";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { incrementViewCount } from "./view-actions";
 
@@ -187,6 +188,15 @@ export default async function VehiclePage({ params }: { params: Params }) {
                 <EmiCalculator price={Number(listing.askingPrice)} />
               </div>
             </div>
+
+            {listing.status === "ACTIVE" ? (
+              <div className="border-border-default bg-background rounded-lg border p-5">
+                <LoanApplyForm
+                  listingId={listing.id}
+                  price={Number(listing.askingPrice)}
+                />
+              </div>
+            ) : null}
           </aside>
         </div>
       </div>

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getPosts } from "@/lib/actions/community";
 import { NewPostForm } from "./NewPostForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function CommunityPage() {
   const posts = await getPosts("BUYER");
 

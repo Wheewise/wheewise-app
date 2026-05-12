@@ -36,6 +36,7 @@ model User {
   posts         Post[]
   replies       Reply[]
   postUpvotes   PostUpvote[]
+  loanApplications LoanApplication[]
 }
 
 // NextAuth Prisma adapter tables (kept minimal — Credentials provider
@@ -99,7 +100,7 @@ model Dealer {
   subscription  Subscription?
   conversations Conversation[]
   apiKeys       ApiKey[]
-  inspections   Inspection[]
+  inspections     Inspection[]
   payouts       Payout[]
 }
 
@@ -137,8 +138,10 @@ model Listing {
   status         ListingStatus @default(ACTIVE)
   viewCount      Int           @default(0)
   enquiryCount   Int           @default(0)
-  isBoosted      Boolean       @default(false)
-  boostExpiresAt DateTime?
+  isBoosted         Boolean       @default(false)
+  boostExpiresAt    DateTime?
+  insuranceProvider String?
+  insuranceExpiry   DateTime?
   createdAt      DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -147,7 +150,8 @@ model Listing {
   enquiries Enquiry[]
   savedBy       SavedListing[]
   conversations Conversation[]
-  inspections   Inspection[]
+  inspections     Inspection[]
+  loanApplications LoanApplication[]
 
   @@index([city, vehicleType, status])
   @@index([dealerId, status])
@@ -396,6 +400,54 @@ model PostUpvote {
 enum Community {
   BUYER
   DEALER
+}
+
+// =============================================================
+// Financial Products
+// =============================================================
+
+model LoanApplication {
+  id            String              @id @default(cuid())
+  listingId     String
+  listing       Listing             @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId       String
+  buyer         User                @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  nbfc          NBFC
+  amount        Decimal             @db.Decimal(12, 2)
+  tenureMonths  Int
+  monthlyEmi    Decimal             @db.Decimal(12, 2)
+  status        LoanStatus          @default(PENDING)
+  applicantName String
+  applicantPhone String
+  applicantPan  String?
+  notes         String?             @db.Text
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([listingId])
+  @@index([buyerId])
+  @@index([status])
+}
+
+enum NBFC {
+  BAJAJ_FINSERV
+  HDFC_BANK
+  ICICI_BANK
+  MAHINDRA_FINANCE
+  KOTAK_MAHINDRA
+  CHOLAMANDALAM
+  SHRIRAM_FINANCE
+  SUNDARAM_FINANCE
+  TATA_CAPITAL
+  OTHER
+}
+
+enum LoanStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  DISBURSED
 }
 
 // =============================================================
