@@ -64,7 +64,10 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   const [listings, total] = await Promise.all([
     prisma.listing.findMany({
       where,
-      include: { photos: { take: 1, orderBy: { sortOrder: "asc" } } },
+      include: {
+        photos: { take: 1, orderBy: { sortOrder: "asc" } },
+        inspections: { where: { status: "COMPLETED" }, select: { overallScore: true } },
+      },
       orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
@@ -206,6 +209,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
                     status: l.status,
                     coverUrl: l.photos[0]?.url,
                     isBoosted: l.isBoosted,
+                    inspectionScore: l.inspections[0]?.overallScore ?? null,
                   }}
                 />
               ))}

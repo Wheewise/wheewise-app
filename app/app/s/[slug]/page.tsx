@@ -88,6 +88,7 @@ export default async function StorefrontPage({
     },
     include: {
       photos: { take: 1, orderBy: { sortOrder: "asc" } },
+      inspections: { where: { status: "COMPLETED" }, select: { overallScore: true } },
     },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
   });
@@ -258,6 +259,7 @@ export default async function StorefrontPage({
                     status: l.status,
                     coverUrl: l.photos[0]?.url,
                     isBoosted: l.isBoosted,
+                    inspectionScore: l.inspections[0]?.overallScore ?? null,
                   }}
                 />
               ))}

@@ -16,6 +16,7 @@ export type ListingCardData = {
   status: string;
   coverUrl?: string;
   isBoosted?: boolean;
+  inspectionScore?: number | null;
 };
 
 export function ListingCard({ listing }: { listing: ListingCardData }) {
@@ -48,6 +49,11 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
             {listing.isBoosted ? (
               <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 uppercase">
                 Featured
+              </span>
+            ) : null}
+            {listing.inspectionScore != null ? (
+              <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700 uppercase">
+                Inspected {listing.inspectionScore}%
               </span>
             ) : null}
           </div>

@@ -32,6 +32,7 @@ model User {
   savedListings SavedListing[]
   conversations Conversation[]
   messages      Message[]
+  inspector     Inspector?
 }
 
 // NextAuth Prisma adapter tables (kept minimal — Credentials provider
@@ -95,6 +96,7 @@ model Dealer {
   subscription  Subscription?
   conversations Conversation[]
   apiKeys       ApiKey[]
+  inspections   Inspection[]
   payouts       Payout[]
 }
 
@@ -142,6 +144,7 @@ model Listing {
   enquiries Enquiry[]
   savedBy       SavedListing[]
   conversations Conversation[]
+  inspections   Inspection[]
 
   @@index([city, vehicleType, status])
   @@index([dealerId, status])
@@ -287,6 +290,57 @@ enum PayoutStatus {
   APPROVED
   REJECTED
   PAID
+}
+
+// =============================================================
+// Quality Inspection
+// =============================================================
+
+model Inspector {
+  id             String           @id @default(cuid())
+  userId         String           @unique
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  certification  String?
+  status         InspectorStatus  @default(PENDING)
+  createdAt      DateTime         @default(now())
+
+  inspections Inspection[]
+}
+
+model Inspection {
+  id           String            @id @default(cuid())
+  listingId    String
+  listing      Listing           @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  inspectorId  String?
+  inspector    Inspector?        @relation(fields: [inspectorId], references: [id], onDelete: SetNull)
+  dealerId     String
+  dealer       Dealer            @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  status       InspectionStatus  @default(REQUESTED)
+  checklist    Json?
+  overallScore Int?
+  notes        String?           @db.Text
+  reportUrl    String?
+  createdAt    DateTime          @default(now())
+  completedAt  DateTime?
+
+  @@index([listingId])
+  @@index([dealerId])
+  @@index([inspectorId])
+  @@index([status])
+}
+
+enum InspectorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum InspectionStatus {
+  REQUESTED
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }
 
 // =============================================================
