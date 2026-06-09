@@ -64,6 +64,8 @@ export function setRateLimitKv(kv: KvStore) {
   kvBinding = kv;
 }
 
+let noKvWarned = false;
+
 export async function rateLimit(
   key: string,
   limit: number,
@@ -72,5 +74,41 @@ export async function rateLimit(
   if (kvBinding) {
     return kvCheck(kvBinding, key, limit, windowMs);
   }
+
+  // In production, in-memory buckets are reset on every cold start — rate limiting
+  // is NOT effective without a KV store. Warn once per process.
+  if (process.env.NODE_ENV === "production" && !noKvWarned) {
+    noKvWarned = true;
+    console.warn(
+      "[rate-limit] No KV store configured. Rate limiting is ineffective on serverless " +
+        "runtimes — call setRateLimitKv() with your Cloudflare KV binding on startup.",
+    );
+  }
+
   return inMemoryCheck(key, limit, windowMs);
+}
+
+/**
+ * Best-effort client IP extraction for rate-limit keys.
+ *
+ * Order:
+ *   1. CF-Connecting-IP — Cloudflare-injected, cannot be spoofed by client.
+ *   2. X-Forwarded-For: rightmost entry — the most-recent proxy that
+ *      wrote the header. Earlier entries can be spoofed by the client.
+ *   3. "unknown" — never used as a fallback; degrade to per-process bucket.
+ */
+export function getClientIp(req: Request): string {
+  const cf = req.headers.get("cf-connecting-ip");
+  if (cf) return cf.trim();
+
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) {
+    const hops = xff
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (hops.length > 0) return hops[hops.length - 1];
+  }
+
+  return "unknown";
 }

@@ -11,8 +11,8 @@ export async function GET(req: Request) {
   const vehicle = await fetchRto(reg);
   if (!vehicle) {
     return NextResponse.json(
-      { error: "Vehicle not found. Try MH02AB1234, DL01CD5678, or KA03EF9012." },
-      { status: 404 },
+      { error: "RTO lookup provider not configured" },
+      { status: 503 },
     );
   }
 

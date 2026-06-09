@@ -33,9 +33,9 @@ describe("listingSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects description too short", () => {
+  it("accepts short description", () => {
     const result = listingSchema.safeParse({ ...validListing, description: "Too short" });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("rejects no photos", () => {

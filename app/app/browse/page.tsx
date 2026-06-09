@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { prisma } from "@/lib/db";
 import { ListingCard } from "@/components/storefront/ListingCard";
 import { Logo } from "@/components/brand/Logo";
+
+import { searchListings } from "@/lib/search";
 
 export const metadata: Metadata = {
   title: "Browse pre-owned cars and bikes",
@@ -31,49 +32,26 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
 
   const minPrice = sp.minPrice ? Number(sp.minPrice) : undefined;
   const maxPrice = sp.maxPrice ? Number(sp.maxPrice) : undefined;
-  const minYear = sp.minYear ? Number(sp.minYear) : undefined;
 
-  const where = {
-    status: "ACTIVE" as const,
-    ...(sp.type === "CAR" || sp.type === "BIKE"
-      ? { vehicleType: sp.type as "CAR" | "BIKE" }
-      : {}),
-    ...(sp.fuel && (FUEL_OPTIONS as readonly string[]).includes(sp.fuel)
-      ? { fuelType: sp.fuel as (typeof FUEL_OPTIONS)[number] }
-      : {}),
-    ...(sp.city ? { city: { contains: sp.city, mode: "insensitive" as const } } : {}),
-    ...(sp.q
-      ? {
-          OR: [
-            { make: { contains: sp.q, mode: "insensitive" as const } },
-            { model: { contains: sp.q, mode: "insensitive" as const } },
-          ],
-        }
-      : {}),
-    ...(minPrice !== undefined || maxPrice !== undefined
-      ? {
-          askingPrice: {
-            ...(minPrice !== undefined ? { gte: minPrice } : {}),
-            ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
-          },
-        }
-      : {}),
-    ...(minYear !== undefined ? { year: { gte: minYear } } : {}),
-  };
+  const result = await searchListings({
+    q: sp.q,
+    vehicleType: sp.type === "CAR" || sp.type === "BIKE" ? sp.type : undefined,
+    make: undefined,
+    model: undefined,
+    city: sp.city,
+    minPrice,
+    maxPrice,
+    fuelType:
+      sp.fuel && (FUEL_OPTIONS as readonly string[]).includes(sp.fuel)
+        ? sp.fuel
+        : undefined,
+    transmission: undefined,
+    page,
+    limit: PAGE_SIZE,
+  });
 
-  const [listings, total] = await Promise.all([
-    prisma.listing.findMany({
-      where,
-      include: {
-        photos: { take: 1, orderBy: { sortOrder: "asc" } },
-        inspections: { where: { status: "COMPLETED" }, select: { overallScore: true } },
-      },
-      orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-    prisma.listing.count({ where }),
-  ]);
+  const listings = result.data;
+  const total = result.meta.total;
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const qs = new URLSearchParams();

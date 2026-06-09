@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { verifyWebhookSignature, type RazorpayWebhookEvent } from "@/lib/razorpay";
 
@@ -27,6 +28,26 @@ export async function POST(req: Request) {
     event = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  // Replay protection — see /api/webhooks/razorpay for the same pattern.
+  if (event.id) {
+    try {
+      await prisma.payment.create({
+        data: {
+          razorpayEventId: event.id,
+          kind: "WEBHOOK",
+          amount: 0,
+          status: "SUCCEEDED",
+          notes: { event: event.event, route: "billing/webhook" },
+        },
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+        return NextResponse.json({ ok: true, replayed: true });
+      }
+      throw err;
+    }
   }
 
   const sub = event.payload?.subscription?.entity;

@@ -59,9 +59,23 @@ export async function createListing(
   }
 
   const { photoUrls, ...data } = parsed.data;
+  const { ensureDescription } = await import("@/lib/ai-description");
+  const finalDescription = await ensureDescription(data.description, {
+    vehicleType: data.vehicleType,
+    make: data.make,
+    model: data.model,
+    year: data.year,
+    fuelType: data.fuelType,
+    transmission: data.transmission,
+    odometerKm: data.odometerKm,
+    askingPrice: data.askingPrice,
+    city: data.city,
+  });
+
   const listing = await prisma.listing.create({
     data: {
       ...data,
+      description: finalDescription,
       dealerId: dealer.id,
       photos: {
         create: photoUrls.map((url, i) => ({ url, sortOrder: i })),
@@ -75,7 +89,7 @@ export async function createListing(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/inventory");
-  revalidatePath(`/s/${dealer.store?.slug}`);
+  revalidatePath(`/s/${dealer.store?.slug}/showcase`);
   redirect(`/dashboard/inventory/${listing.id}/edit?created=1`);
 }
 
@@ -100,29 +114,99 @@ export async function updateListing(
   }
 
   const { photoUrls, ...data } = parsed.data;
+  const { ensureDescription } = await import("@/lib/ai-description");
+  const finalDescription = await ensureDescription(data.description, {
+    vehicleType: data.vehicleType,
+    make: data.make,
+    model: data.model,
+    year: data.year,
+    fuelType: data.fuelType,
+    transmission: data.transmission,
+    odometerKm: data.odometerKm,
+    askingPrice: data.askingPrice,
+    city: data.city,
+  });
+
+  // Fetch existing photos to diff against — only delete/create what changed
+  const existingPhotos = await prisma.listingPhoto.findMany({
+    where: { listingId },
+    select: { id: true, url: true },
+    orderBy: { sortOrder: "asc" },
+  });
+
+  const existingUrls = new Set(existingPhotos.map((p) => p.url));
+  const incomingUrls = new Set(photoUrls);
+
+  const toDelete = existingPhotos
+    .filter((p) => !incomingUrls.has(p.url))
+    .map((p) => p.id);
+  const toAdd = photoUrls
+    .map((url, i) => ({ url, sortOrder: i }))
+    .filter((p) => !existingUrls.has(p.url));
+
+  // Fetch existing 360 photos
+  const existing360 = await prisma.listing360Photo.findMany({
+    where: { listingId },
+    select: { id: true, url: true },
+  });
+  const existing360Urls = new Set(existing360.map((p) => p.url));
+  const incoming360Urls = new Set(photo360.map((p) => p.url));
+  const toDelete360 = existing360
+    .filter((p) => !incoming360Urls.has(p.url))
+    .map((p) => p.id);
+  const toAdd360 = photo360.filter((p) => !existing360Urls.has(p.url));
+
   await prisma.$transaction([
     prisma.listing.update({
       where: { id: listingId },
-      data,
+      data: {
+        ...data,
+        description: finalDescription,
+      },
     }),
-    prisma.listingPhoto.deleteMany({ where: { listingId } }),
-    prisma.listingPhoto.createMany({
-      data: photoUrls.map((url, i) => ({ listingId, url, sortOrder: i })),
-    }),
-    prisma.listing360Photo.deleteMany({ where: { listingId } }),
-    ...(photo360.length > 0
+    ...(toDelete.length > 0
+      ? [prisma.listingPhoto.deleteMany({ where: { id: { in: toDelete } } })]
+      : []),
+    ...(toAdd.length > 0
+      ? [
+          prisma.listingPhoto.createMany({
+            data: toAdd.map((p) => ({ listingId, url: p.url, sortOrder: p.sortOrder })),
+          }),
+        ]
+      : []),
+    ...photoUrls
+      .map((url, index) => {
+        const photoId = existingPhotos.find((p) => p.url === url)?.id;
+        if (!photoId) return null;
+        return prisma.listingPhoto.update({
+          where: { id: photoId },
+          data: { sortOrder: index },
+        });
+      })
+      .filter((op): op is NonNullable<typeof op> => op !== null),
+    ...(toDelete360.length > 0
+      ? [prisma.listing360Photo.deleteMany({ where: { id: { in: toDelete360 } } })]
+      : []),
+    ...(toAdd360.length > 0
       ? [
           prisma.listing360Photo.createMany({
-            data: photo360.map((p) => ({ listingId, url: p.url, angle: p.angle })),
+            data: toAdd360.map((p) => ({ listingId, url: p.url, angle: p.angle })),
           }),
         ]
       : []),
   ]);
 
+  // Log orphaned photo count for future cleanup job
+  if (toDelete.length > 0) {
+    console.info(
+      `[listing-update] ${toDelete.length} orphaned photo(s) for listing ${listingId} — queue R2 cleanup`,
+    );
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/inventory");
   revalidatePath(`/dashboard/inventory/${listingId}/edit`);
-  revalidatePath(`/s/${dealer.store?.slug}`);
+  revalidatePath(`/s/${dealer.store?.slug}/showcase`);
   revalidatePath(`/vehicle/${listingId}`);
   return { ok: true };
 }
@@ -137,7 +221,7 @@ export async function setListingStatus(
     data: { status },
   });
   revalidatePath("/dashboard/inventory");
-  revalidatePath(`/s/${dealer.store?.slug}`);
+  revalidatePath(`/s/${dealer.store?.slug}/showcase`);
 }
 
 export async function deleteListing(listingId: string) {
@@ -146,5 +230,5 @@ export async function deleteListing(listingId: string) {
     where: { id: listingId, dealerId: dealer.id },
   });
   revalidatePath("/dashboard/inventory");
-  revalidatePath(`/s/${dealer.store?.slug}`);
+  revalidatePath(`/s/${dealer.store?.slug}/showcase`);
 }

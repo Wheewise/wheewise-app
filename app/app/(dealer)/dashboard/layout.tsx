@@ -11,7 +11,10 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) {
+    const callbackUrl = `/dashboard`;
+    redirect(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+  }
   if (session.user.role !== "DEALER") redirect("/");
 
   return (

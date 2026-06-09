@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { scoreLead } from "@/lib/lead-priority";
 import { sendLeadNotification } from "@/lib/email";
+import { dispatchNotification } from "@/lib/notifications";
+import { appUrl } from "@/lib/json-ld";
 
 const leadSchema = z.object({
   listingId: z.string().min(1),
@@ -17,11 +19,6 @@ const leadSchema = z.object({
   buyerEmail: z.string().email().optional().or(z.literal("")),
   message: z.string().max(1000).optional().or(z.literal("")),
 });
-
-function getClientIp(req: Request): string {
-  const fwd = req.headers.get("x-forwarded-for");
-  return fwd?.split(",")[0]?.trim() || "unknown";
-}
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
@@ -81,16 +78,30 @@ export async function POST(req: Request) {
     data: { enquiryCount: { increment: 1 } },
   });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://wheewise.in";
-  await sendLeadNotification({
-    to: listing.dealer.user.email,
-    dealerName: listing.dealer.businessName,
-    vehicle: `${listing.year} ${listing.make} ${listing.model}`,
-    buyerName: data.buyerName,
-    buyerPhone: data.buyerPhone,
-    buyerEmail: data.buyerEmail || null,
-    message: data.message || null,
-    dashboardUrl: `${appUrl}/dashboard/leads`,
+  const dashboardUrl = appUrl("/dashboard/leads");
+  const vehicle = `${listing.year} ${listing.make} ${listing.model}`;
+
+  if (listing.dealer.user.email) {
+    await sendLeadNotification({
+      to: listing.dealer.user.email,
+      dealerName: listing.dealer.businessName,
+      vehicle,
+      buyerName: data.buyerName,
+      buyerPhone: data.buyerPhone,
+      buyerEmail: data.buyerEmail || null,
+      message: data.message || null,
+      dashboardUrl,
+    });
+  }
+
+  // Unified channel-dispatch for SMS / in-app once those providers land.
+  // Email path is already handled above with the rich template; we pass an
+  // empty toEmail so the unified path doesn't double-send.
+  await dispatchNotification({
+    toPhone: listing.dealer.phone,
+    subject: `New lead — ${vehicle}`,
+    body: `${data.buyerName} (${data.buyerPhone}) enquired about your ${vehicle}. View: ${dashboardUrl}`,
+    type: "ENQUIRY_RECEIVED",
   });
 
   return NextResponse.json({ ok: true, id: enquiry.id });

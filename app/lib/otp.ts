@@ -1,3 +1,5 @@
+import { rateLimit } from "./rate-limit";
+
 const otpStore = new Map<string, { otp: string; expiresAt: number; attempts: number }>();
 
 let kv: {
@@ -15,10 +17,11 @@ function otpKey(phone: string): string {
 }
 
 export async function generateOtp(phone: string): Promise<string> {
-  const otp =
-    process.env.NODE_ENV === "production"
-      ? String(Math.floor(100000 + Math.random() * 900000))
-      : "000000";
+  // OTP bypass requires BOTH OTP_DEV_BYPASS=1 AND NODE_ENV=development.
+  // Never enabled in production / staging / preview. See env.ts boot guard.
+  const devBypass =
+    process.env.OTP_DEV_BYPASS === "1" && process.env.NODE_ENV === "development";
+  const otp = devBypass ? "000000" : String(Math.floor(100000 + Math.random() * 900000));
 
   const entry = { otp, expiresAt: Date.now() + 5 * 60 * 1000, attempts: 0 };
   const key = otpKey(phone);
@@ -33,7 +36,14 @@ export async function generateOtp(phone: string): Promise<string> {
 }
 
 export async function verifyOtp(phone: string, otp: string): Promise<boolean> {
+  const normalized = phone.replace(/[^0-9]/g, "").slice(-10);
   const key = otpKey(phone);
+
+  // Per-phone failure cap survives across generateOtp calls (the in-memory
+  // entry.attempts counter resets every regenerate). Caps 10 wrong attempts
+  // per phone per hour.
+  const limit = await rateLimit(`otp-verify:${normalized}`, 10, 60 * 60 * 1000);
+  if (!limit.ok) return false;
 
   let raw: string | null;
   if (kv) {
@@ -72,11 +82,9 @@ export async function verifyOtp(phone: string, otp: string): Promise<boolean> {
 }
 
 export async function sendOtpSms(phone: string, otp: string): Promise<void> {
-  if (process.env.NODE_ENV !== "production") {
-    console.log(`[OTP] ${phone} → ${otp}`);
-    return;
-  }
-  // Production: integrate with MSG91/Twilio
-  // await fetch("https://api.msg91.com/api/v5/flow/", { ... })
-  console.log(`[OTP] SMS sent to ${phone}`);
+  // Delegates to the unified SMS provider. In dev (no key configured) the
+  // provider logs to console — preserving prior behaviour. In production a
+  // missing provider throws so misconfiguration surfaces immediately.
+  const { sendSms } = await import("./sms-provider");
+  await sendSms(phone, `Your Wheewise verification code is ${otp}. Valid for 5 minutes.`);
 }

@@ -17,7 +17,7 @@ export const listingSchema = z.object({
   transmission: z.enum(TRANSMISSIONS).optional(),
   odometerKm: z.coerce.number().int().min(0).max(1_000_000),
   askingPrice: z.coerce.number().min(1000, "Price too low").max(100_000_000),
-  description: z.string().min(20, "Add at least 20 characters").max(4000),
+  description: z.string().max(4000).optional(),
   city: z.string().min(2, "Required").max(60),
   photoUrls: z
     .array(z.string().url())

@@ -28,10 +28,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${BASE}/browse`, changeFrequency: "daily", priority: 0.8 },
     { url: `${BASE}/signup/dealer`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.3 },
   ];
 
   const storeUrls: MetadataRoute.Sitemap = stores.map((s) => ({
-    url: `${BASE}/s/${s.slug}`,
+    url: `${BASE}/s/${s.slug}/showcase`,
     lastModified: s.updatedAt,
     changeFrequency: "daily",
     priority: 0.7,

@@ -1,6 +1,25 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getDealerIdForUser } from "@/lib/dealer";
+
+async function isParticipant(
+  conversationId: string,
+  userId: string,
+  role: string | undefined,
+): Promise<boolean> {
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { buyerId: true, dealerId: true },
+  });
+  if (!conversation) return false;
+  if (conversation.buyerId === userId) return true;
+  if (role === "DEALER") {
+    const myDealerId = await getDealerIdForUser(userId);
+    if (myDealerId && conversation.dealerId === myDealerId) return true;
+  }
+  return false;
+}
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -14,15 +33,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "conversationId required" }, { status: 400 });
   }
 
-  const conversation = await prisma.conversation.findUnique({
-    where: { id: conversationId },
-    select: { buyerId: true, dealerId: true },
-  });
-  if (
-    !conversation ||
-    (conversation.buyerId !== session.user.id &&
-      conversation.dealerId !== session.user.id)
-  ) {
+  if (!(await isParticipant(conversationId, session.user.id, session.user.role))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -39,7 +50,6 @@ export async function GET(req: Request) {
     take: 100,
   });
 
-  // Mark messages from the other party as read
   const unreadIds = messages
     .filter((m) => m.senderId !== session.user.id && !m.readAt)
     .map((m) => m.id);
@@ -77,15 +87,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const conversation = await prisma.conversation.findUnique({
-    where: { id: conversationId },
-    select: { buyerId: true, dealerId: true },
-  });
-  if (
-    !conversation ||
-    (conversation.buyerId !== session.user.id &&
-      conversation.dealerId !== session.user.id)
-  ) {
+  if (!(await isParticipant(conversationId, session.user.id, session.user.role))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -99,7 +101,7 @@ export async function POST(req: Request) {
 
   await prisma.conversation.update({
     where: { id: conversationId },
-    data: { updatedAt: new Date() },
+    data: { lastMessageAt: new Date() },
   });
 
   return NextResponse.json(

@@ -16,6 +16,8 @@ const serverSchema = z.object({
   RAZORPAY_PLAN_YEARLY: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).optional(),
 });
 
@@ -38,6 +40,22 @@ try {
       console.error(`Missing required env vars: ${missing.join(", ")}`);
     }
     console.error(error.flatten().fieldErrors);
+  }
+}
+
+// Hard-fail on boot if any dev backdoor flag is set in production.
+// Catches the staging-leak vulnerability where flags get carried through CI.
+if (process.env.NODE_ENV === "production") {
+  const forbidden = [
+    "WHEEWISE_DEV_LOGIN",
+    "OTP_DEV_BYPASS",
+    "WHEEWISE_MOCK_GST",
+    "WHEEWISE_MOCK_RTO",
+  ].filter((k) => process.env[k] === "1" || process.env[k] === "true");
+  if (forbidden.length > 0) {
+    throw new Error(
+      `Refusing to boot: dev-only flags set in production: ${forbidden.join(", ")}`,
+    );
   }
 }
 

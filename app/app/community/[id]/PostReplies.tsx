@@ -8,7 +8,7 @@ type ReplyData = {
   id: string;
   body: string;
   createdAt: Date;
-  author: { name: string | null; email: string };
+  author: { name: string | null; email: string | null };
 };
 
 export function PostReplies({
@@ -35,7 +35,7 @@ export function PostReplies({
           className="border-border-default bg-background rounded-lg border p-4"
         >
           <p className="text-xs text-zinc-500">
-            {r.author.name ?? r.author.email} ·{" "}
+            {r.author.name ?? r.author.email ?? "Anonymous"} ·{" "}
             {new Date(r.createdAt).toLocaleDateString("en-IN")}
           </p>
           <p className="mt-1 text-sm whitespace-pre-wrap text-zinc-700">{r.body}</p>
@@ -50,8 +50,12 @@ export function PostReplies({
             if (!body.trim()) return;
             setSaving(true);
             try {
-              await createReply(postId, body.trim());
-              setBody("");
+              const res = await createReply(postId, body.trim());
+              if (res.ok) {
+                setBody("");
+              } else {
+                alert(res.error);
+              }
             } catch (err) {
               alert(err instanceof Error ? err.message : "Failed");
             } finally {

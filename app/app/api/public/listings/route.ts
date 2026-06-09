@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/api-auth";
 import { prisma } from "@/lib/db";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: Request) {
   const dealerId = await validateApiKey(req);
@@ -9,7 +9,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
   }
 
-  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+  const ip = getClientIp(req);
   const { ok: withinLimit } = await rateLimit(`api-listings:${ip}`, 100, 60 * 1000);
   if (!withinLimit) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });

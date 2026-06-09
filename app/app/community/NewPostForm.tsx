@@ -27,7 +27,7 @@ export function NewPostForm({ community }: { community: "BUYER" | "DEALER" }) {
         if (!title.trim() || !body.trim()) return;
         setSaving(true);
         try {
-          await createPost(
+          const res = await createPost(
             community,
             title.trim(),
             body.trim(),
@@ -36,10 +36,14 @@ export function NewPostForm({ community }: { community: "BUYER" | "DEALER" }) {
               .map((t) => t.trim())
               .filter(Boolean),
           );
-          setTitle("");
-          setBody("");
-          setTags("");
-          setOpen(false);
+          if (res.ok) {
+            setTitle("");
+            setBody("");
+            setTags("");
+            setOpen(false);
+          } else {
+            alert(res.error);
+          }
         } catch (err) {
           alert(err instanceof Error ? err.message : "Failed");
         } finally {

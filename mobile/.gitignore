@@ -1,0 +1,29 @@
+# Capacitor / Cordova
+node_modules/
+www/
+.DS_Store
+
+# iOS
+ios/App/Pods/
+ios/App/build/
+ios/App/Podfile.lock
+ios/.gradle/
+ios/build/
+ios/DerivedData/
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/captures/
+*.iml
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+
+# Misc
+.vscode/
+.idea/

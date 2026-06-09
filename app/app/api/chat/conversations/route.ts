@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getDealerIdForUser } from "@/lib/dealer";
 
 export async function GET() {
   const session = await auth();
@@ -8,10 +9,15 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const userId = session.user.id;
+  const myDealerId =
+    session.user.role === "DEALER" ? await getDealerIdForUser(userId) : null;
+
+  const orFilters: Array<{ buyerId?: string; dealerId?: string }> = [{ buyerId: userId }];
+  if (myDealerId) orFilters.push({ dealerId: myDealerId });
+
   const conversations = await prisma.conversation.findMany({
-    where: {
-      OR: [{ buyerId: session.user.id }, { dealerId: session.user.id }],
-    },
+    where: { OR: orFilters },
     include: {
       listing: {
         select: {
@@ -26,15 +32,16 @@ export async function GET() {
       dealer: { select: { id: true, businessName: true } },
       messages: { take: 1, orderBy: { createdAt: "desc" } },
     },
-    orderBy: { updatedAt: "desc" },
+    // lastMessageAt is the authoritative chat-list order; fall back to updatedAt
+    // for conversations that have no messages yet.
+    orderBy: [{ lastMessageAt: { sort: "desc", nulls: "last" } }, { updatedAt: "desc" }],
   });
 
-  // Count unread messages where the other party sent them
   const unreadCounts = await prisma.message.groupBy({
     by: ["conversationId"],
     where: {
       conversationId: { in: conversations.map((c) => c.id) },
-      senderId: { not: session.user.id },
+      senderId: { not: userId },
       readAt: null,
     },
     _count: { id: true },
@@ -50,12 +57,12 @@ export async function GET() {
       photo: c.listing.photos[0]?.url ?? null,
     },
     otherParty:
-      session.user.id === c.buyerId
+      userId === c.buyerId
         ? { name: c.dealer.businessName, id: c.dealer.id }
         : { name: c.buyer.name ?? "Buyer", id: c.buyer.id },
     lastMessage: c.messages[0]?.body?.slice(0, 100) ?? null,
     unread: unreadMap.get(c.id) ?? 0,
-    updatedAt: c.updatedAt,
+    updatedAt: c.lastMessageAt ?? c.updatedAt,
   }));
 
   return NextResponse.json(result);
@@ -81,14 +88,13 @@ export async function POST(req: Request) {
 
   const listing = await prisma.listing.findUnique({
     where: { id: listingId },
-    select: { dealerId: true },
+    select: { dealerId: true, dealer: { select: { userId: true } } },
   });
   if (!listing) {
     return NextResponse.json({ error: "Listing not found" }, { status: 404 });
   }
 
-  // Prevent dealer from messaging themselves
-  if (listing.dealerId === session.user.id) {
+  if (listing.dealer.userId === session.user.id) {
     return NextResponse.json(
       { error: "Cannot message your own listing" },
       { status: 400 },

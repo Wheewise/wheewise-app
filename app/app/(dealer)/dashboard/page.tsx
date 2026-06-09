@@ -47,7 +47,7 @@ export default async function DashboardPage() {
           <p className="mt-1 text-sm text-zinc-500">
             Your showroom link:{" "}
             <Link
-              href={`/s/${dealer.store?.slug ?? ""}`}
+              href={`/s/${dealer.store?.slug ?? ""}/showcase`}
               className="text-brand-red font-medium hover:underline"
             >
               /s/{dealer.store?.slug}

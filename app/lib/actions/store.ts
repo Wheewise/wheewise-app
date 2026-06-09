@@ -56,8 +56,8 @@ export async function updateStore(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/store");
-  revalidatePath(`/s/${dealer.store.slug}`);
-  if (updated.slug !== dealer.store.slug) revalidatePath(`/s/${updated.slug}`);
+  revalidatePath(`/s/${dealer.store.slug}/showcase`);
+  if (updated.slug !== dealer.store.slug) revalidatePath(`/s/${updated.slug}/showcase`);
 
   return { ok: true, slug: updated.slug };
 }

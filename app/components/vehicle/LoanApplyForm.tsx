@@ -63,7 +63,11 @@ export function LoanApplyForm({
         applicantPhone: phone.trim(),
         applicantPan: pan.trim() || undefined,
       });
-      setResult(res);
+      if (res.ok) {
+        setResult({ emi: res.emi });
+      } else {
+        alert(res.error);
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed");
     } finally {

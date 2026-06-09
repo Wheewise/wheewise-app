@@ -46,11 +46,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Dealer not found" }, { status: 404 });
   }
 
+  // Reject oversized uploads before reading body to avoid memory pressure.
+  // 1 MB easily covers the 100-row cap (template row is ~120 bytes).
+  const MAX_BYTES = 1_000_000;
+  const declaredLength = Number(req.headers.get("content-length") ?? "0");
+  if (declaredLength > MAX_BYTES) {
+    return NextResponse.json(
+      { error: `CSV exceeds ${MAX_BYTES / 1000} KB limit` },
+      { status: 413 },
+    );
+  }
+
   let text: string;
   try {
     text = await req.text();
   } catch {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+  // Defence in depth: also enforce the cap on the actual payload size, in case
+  // the client omitted/lied about Content-Length.
+  if (text.length > MAX_BYTES) {
+    return NextResponse.json(
+      { error: `CSV exceeds ${MAX_BYTES / 1000} KB limit` },
+      { status: 413 },
+    );
   }
 
   const rows = parseCSV(text);
@@ -90,9 +109,24 @@ export async function POST(req: Request) {
         continue;
       }
 
+      const { description, ...data } = parsed.data;
+      const { ensureDescription } = await import("@/lib/ai-description");
+      const finalDescription = await ensureDescription(description, {
+        vehicleType: data.vehicleType,
+        make: data.make,
+        model: data.model,
+        year: data.year,
+        fuelType: data.fuelType,
+        transmission: data.transmission,
+        odometerKm: data.odometerKm,
+        askingPrice: data.askingPrice,
+        city: data.city,
+      });
+
       const listing = await prisma.listing.create({
         data: {
-          ...parsed.data,
+          ...data,
+          description: finalDescription,
           dealerId: dealer.id,
           status: "ACTIVE",
         },

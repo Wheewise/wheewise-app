@@ -15,14 +15,18 @@ export default async function ApiKeysPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">API Keys</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Manage API keys for programmatic access to your inventory data.
+          Manage API keys for programmatic access to your inventory data. Keys are shown
+          only once when created — store them somewhere safe.
         </p>
       </div>
       <ApiKeyManager
         existingKeys={keys.map((k) => ({
           id: k.id,
           name: k.name,
-          key: k.key,
+          // Pre-migration keys have plaintext `key` but no `keyPrefix`. Show
+          // the legacy plaintext until they're rotated; new keys only show prefix.
+          keyPrefix: k.keyPrefix ?? k.key,
+          isLegacy: k.keyHash == null,
           lastUsedAt: k.lastUsedAt,
           createdAt: k.createdAt,
         }))}

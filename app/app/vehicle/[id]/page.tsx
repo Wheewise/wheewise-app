@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatINR, formatNumber } from "@/lib/format";
 import { whatsappLink } from "@/lib/whatsapp";
+import { appUrl, jsonLdScriptContent } from "@/lib/json-ld";
 import { EnquiryForm } from "./EnquiryForm";
 import { PhotoViewer } from "./PhotoViewer";
 import { EmiCalculator } from "@/components/vehicle/EmiCalculator";
@@ -12,7 +13,7 @@ import { SaveButton } from "@/components/vehicle/SaveButton";
 import { CompareButton } from "@/components/vehicle/CompareButton";
 import { LoanApplyForm } from "@/components/vehicle/LoanApplyForm";
 import { ChatWidget } from "@/components/chat/ChatWidget";
-import { incrementViewCount } from "./view-actions";
+import { ViewCounter } from "./ViewCounter";
 
 type Params = Promise<{ id: string }>;
 
@@ -30,11 +31,14 @@ export async function generateMetadata({
   const title = `${listing.year} ${listing.make} ${listing.model} — ${formatINR(Number(listing.askingPrice))}`;
   return {
     title,
-    description: listing.description.slice(0, 160),
+    description: listing.description?.slice(0, 160) || "",
     openGraph: {
       title,
-      description: listing.description.slice(0, 160),
+      description: listing.description?.slice(0, 160) || "",
       images: listing.photos[0]?.url ? [listing.photos[0].url] : undefined,
+    },
+    alternates: {
+      canonical: appUrl(`/vehicle/${listing.id}`),
     },
   };
 }
@@ -51,8 +55,6 @@ export default async function VehiclePage({ params }: { params: Params }) {
   });
   if (!listing) notFound();
 
-  await incrementViewCount(listing.id, listing.dealerId);
-
   const session = await auth();
   const buyerDefaults = session?.user
     ? {
@@ -68,11 +70,33 @@ export default async function VehiclePage({ params }: { params: Params }) {
     `Hi ${dealer.businessName}, I'm interested in the ${vehicle} listed at ${formatINR(Number(listing.askingPrice))}.`,
   );
 
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: vehicle,
+    description: listing.description || "",
+    image: listing.photos[0]?.url,
+    offers: {
+      "@type": "Offer",
+      price: Number(listing.askingPrice),
+      priceCurrency: "INR",
+      availability:
+        listing.status === "SOLD"
+          ? "https://schema.org/SoldOut"
+          : "https://schema.org/InStock",
+      itemCondition: "https://schema.org/UsedCondition",
+    },
+  };
+
   return (
     <div className="bg-surface-muted min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScriptContent(schema) }}
+      />
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         <Link
-          href={dealer.store ? `/s/${dealer.store.slug}` : "/"}
+          href={dealer.store ? `/s/${dealer.store.slug}/showcase` : "/"}
           className="hover:text-foreground text-sm text-zinc-500"
         >
           ← Back to {dealer.businessName}
@@ -80,6 +104,7 @@ export default async function VehiclePage({ params }: { params: Params }) {
 
         <div className="mt-4 grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
+            <ViewCounter listingId={listing.id} dealerId={listing.dealerId} />
             <PhotoViewer
               photos={listing.photos.map((p) => p.url)}
               photos360={listing.photos360.map((p) => p.url)}
@@ -139,7 +164,7 @@ export default async function VehiclePage({ params }: { params: Params }) {
                 Listed by
               </div>
               <Link
-                href={dealer.store ? `/s/${dealer.store.slug}` : "#"}
+                href={dealer.store ? `/s/${dealer.store.slug}/showcase` : "#"}
                 className="mt-1 block text-lg font-bold hover:underline"
               >
                 {dealer.businessName}

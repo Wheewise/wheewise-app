@@ -11,6 +11,7 @@ import { verifyOtp } from "./otp";
 const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
+  dev: z.coerce.boolean().optional(),
 });
 
 const otpSchema = z.object({
@@ -35,6 +36,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
         phone: { label: "Phone", type: "tel" },
         otp: { label: "OTP", type: "text" },
+        dev: { label: "Dev", type: "checkbox" },
       },
       async authorize(creds) {
         // Phone OTP flow
@@ -47,23 +49,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           const normalized = normalizePhone(parsed.data.phone);
           const existing = await prisma.user.findFirst({
-            where: { phone: { contains: normalized } },
+            where: { phone: normalized },
             select: { id: true, email: true, name: true, role: true },
           });
 
           if (existing) {
             return {
               id: existing.id,
-              email: existing.email ?? `${normalized}@phone.user`,
+              email: null,
               name: existing.name ?? `User ${normalized.slice(-4)}`,
               role: existing.role,
             };
           }
 
-          // Auto-create buyer account for new phone numbers
+          // Auto-create buyer account for new phone numbers (no email for phone-only users)
           const user = await prisma.user.create({
             data: {
-              email: `${normalized}@phone.user`,
+              email: null,
               phone: normalized,
               passwordHash: "",
               name: `User ${normalized.slice(-4)}`,
@@ -71,6 +73,64 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
             select: { id: true, email: true, name: true, role: true },
           });
+
+          return {
+            id: user.id,
+            // NextAuth requires a non-null email; use phone as synthetic identifier
+            email: user.email ?? `${normalized}@wheewise.phone`,
+            name: user.name,
+            role: user.role,
+          };
+        }
+
+        // Dev fast-login — requires BOTH WHEEWISE_DEV_LOGIN=1 AND NODE_ENV=development.
+        // Never enabled in production / staging / preview. See env.ts boot guard.
+        if (
+          process.env.NODE_ENV === "development" &&
+          process.env.WHEEWISE_DEV_LOGIN === "1" &&
+          creds.dev
+        ) {
+          const devEmail = "dev@wheewise.local";
+          let user = await prisma.user.findUnique({
+            where: { email: devEmail },
+            select: { id: true, email: true, name: true, role: true },
+          });
+
+          if (!user) {
+            const bcrypt = await import("bcryptjs");
+            user = await prisma.user.create({
+              data: {
+                email: devEmail,
+                passwordHash: await bcrypt.default.hash("dev-pass-ignored", 10),
+                name: "Dev Dealer",
+                role: "DEALER",
+              },
+              select: { id: true, email: true, name: true, role: true },
+            });
+          }
+
+          // Ensure dealer + store records exist
+          let dealer = await prisma.dealer.findUnique({
+            where: { userId: user.id },
+            select: { id: true },
+          });
+          if (!dealer) {
+            dealer = await prisma.dealer.create({
+              data: {
+                userId: user.id,
+                businessName: "Dev Dealership",
+                city: "Bangalore",
+                phone: "9999999999",
+              },
+              select: { id: true },
+            });
+            await prisma.store.create({
+              data: {
+                dealerId: dealer.id,
+                slug: "dev-store",
+              },
+            });
+          }
 
           return {
             id: user.id,

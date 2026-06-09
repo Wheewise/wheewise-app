@@ -4,10 +4,18 @@ import { requireDealer } from "@/lib/dealer";
 import { Button } from "@/components/ui/Field";
 import { formatINR } from "@/lib/format";
 
-export default async function InventoryPage() {
+export default async function InventoryPage(props: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const searchParams = await props.searchParams;
   const { dealer } = await requireDealer();
 
+  const limit = 20;
+  const cursor = searchParams?.cursor as string | undefined;
+
   const listings = await prisma.listing.findMany({
+    take: limit + 1,
+    cursor: cursor ? { id: cursor } : undefined,
     where: { dealerId: dealer.id },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     include: {
@@ -15,6 +23,12 @@ export default async function InventoryPage() {
       _count: { select: { enquiries: true } },
     },
   });
+
+  let nextCursor: string | undefined = undefined;
+  if (listings.length > limit) {
+    const nextItem = listings.pop();
+    nextCursor = nextItem!.id;
+  }
 
   return (
     <div className="space-y-6">
@@ -98,6 +112,14 @@ export default async function InventoryPage() {
               ))}
             </tbody>
           </table>
+
+          {nextCursor && (
+            <div className="border-border-default flex justify-center border-t p-4">
+              <Link href={`/dashboard/inventory?cursor=${nextCursor}`}>
+                <Button variant="outline">Load More</Button>
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </div>

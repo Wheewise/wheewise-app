@@ -117,6 +117,19 @@ export async function updatePayoutStatus(
 }
 
 export async function getDealerPayouts(dealerId: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  if (session.user.role !== "ADMIN") {
+    const dealer = await prisma.dealer.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+    if (!dealer || dealer.id !== dealerId) {
+      throw new Error("Forbidden");
+    }
+  }
+
   return prisma.payout.findMany({
     where: { dealerId },
     orderBy: { createdAt: "desc" },

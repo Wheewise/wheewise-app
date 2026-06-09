@@ -1,8 +1,10 @@
 "use server";
 
+import { randomBytes } from "crypto";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { signIn } from "@/lib/auth";
 
@@ -116,37 +118,63 @@ export async function signupDealer(
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
-  const slug = await generateUniqueSlug(parsed.data.businessName);
-
   const trialEnds = new Date();
   trialEnds.setDate(trialEnds.getDate() + 14);
 
-  await prisma.user.create({
-    data: {
-      email: parsed.data.email,
-      name: parsed.data.name,
-      passwordHash,
-      role: "DEALER",
-      dealer: {
-        create: {
-          businessName: parsed.data.businessName,
-          city: parsed.data.city,
-          phone: parsed.data.phone,
-          whatsapp: parsed.data.whatsapp,
-          store: {
-            create: { slug },
-          },
-          subscription: {
+  // Retry loop: handles slug uniqueness race condition (P2002 unique constraint violation).
+  // Crypto-random suffix avoids predictable retries that could collide again.
+  const MAX_ATTEMPTS = 5;
+  let created = false;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const suffix = attempt > 0 ? `-${randomBytes(3).toString("hex")}` : "";
+    const slug = (await generateUniqueSlug(parsed.data.businessName)) + suffix;
+
+    try {
+      await prisma.user.create({
+        data: {
+          email: parsed.data.email,
+          name: parsed.data.name,
+          passwordHash,
+          role: "DEALER",
+          dealer: {
             create: {
-              plan: "FREE_TRIAL",
-              status: "TRIALING",
-              currentPeriodEnd: trialEnds,
+              businessName: parsed.data.businessName,
+              city: parsed.data.city,
+              phone: parsed.data.phone,
+              whatsapp: parsed.data.whatsapp,
+              store: { create: { slug } },
+              subscription: {
+                create: {
+                  plan: "FREE_TRIAL",
+                  status: "TRIALING",
+                  currentPeriodEnd: trialEnds,
+                },
+              },
             },
           },
         },
+      });
+      created = true;
+      break;
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  if (!created) {
+    // All retries collided. Surface as a form error rather than pretending success.
+    return {
+      ok: false,
+      errors: {
+        businessName: [
+          "Could not allocate a unique storefront URL. Try a slightly different business name.",
+        ],
       },
-    },
-  });
+    };
+  }
 
   await signIn("credentials", {
     email: parsed.data.email,

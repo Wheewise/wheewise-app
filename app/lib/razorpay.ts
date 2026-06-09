@@ -19,10 +19,28 @@ export type RazorpayPlanTier = keyof typeof PLAN_IDS;
 
 export function verifyWebhookSignature(rawBody: string, signature: string): boolean {
   if (!webhookSecret) return false;
-  const expected = crypto
-    .createHmac("sha256", webhookSecret)
-    .update(rawBody)
-    .digest("hex");
+  return constantTimeHmacEqual(webhookSecret, rawBody, signature);
+}
+
+/**
+ * Verifies a Razorpay payment-success signature returned to the client after checkout.
+ * Spec: HMAC-SHA256 of `${orderId}|${paymentId}` using the API key secret.
+ */
+export function verifyPaymentSignature(
+  orderId: string,
+  paymentId: string,
+  signature: string,
+): boolean {
+  if (!keySecret) return false;
+  return constantTimeHmacEqual(keySecret, `${orderId}|${paymentId}`, signature);
+}
+
+function constantTimeHmacEqual(
+  secret: string,
+  message: string,
+  signature: string,
+): boolean {
+  const expected = crypto.createHmac("sha256", secret).update(message).digest("hex");
   try {
     return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
   } catch {
@@ -30,7 +48,23 @@ export function verifyWebhookSignature(rawBody: string, signature: string): bool
   }
 }
 
+/**
+ * Server-side source of truth for boost plan pricing.
+ * Order-creation builds against this; order-verification rejects any
+ * mismatch — so a stale client (or tampered cart) cannot pay yesterday's
+ * price for today's plan duration.
+ */
+export const BOOST_PLANS = {
+  "7": { days: 7, amount: 19900, label: "7 days — ₹199" },
+  "14": { days: 14, amount: 29900, label: "14 days — ₹299" },
+  "30": { days: 30, amount: 49900, label: "30 days — ₹499" },
+} as const;
+
+export type BoostDuration = keyof typeof BOOST_PLANS;
+
 export type RazorpayWebhookEvent = {
+  /** Razorpay event id — unique per delivery, used for replay protection. */
+  id?: string;
   event: string;
   payload: {
     subscription?: {

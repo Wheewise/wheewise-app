@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-
-const BOOST_PLANS = {
-  "7": { days: 7, label: "7 days — ₹199" },
-  "14": { days: 14, label: "14 days — ₹299" },
-  "30": { days: 30, label: "30 days — ₹499" },
-} as const;
+import { razorpay, BOOST_PLANS } from "@/lib/razorpay";
 
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user || session.user.role !== "DEALER") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!razorpay) {
+    return NextResponse.json({ error: "Payments not configured" }, { status: 503 });
   }
 
   const dealer = await prisma.dealer.findUnique({
@@ -42,23 +41,28 @@ export async function POST(req: Request) {
 
   const listing = await prisma.listing.findFirst({
     where: { id: listingId, dealerId: dealer.id },
+    select: { id: true },
   });
   if (!listing) {
     return NextResponse.json({ error: "Listing not found" }, { status: 404 });
   }
 
-  // Production: create Razorpay order here, return orderId for checkout
-  // For dev: boost immediately
-  const boostExpiresAt = new Date(Date.now() + plan.days * 24 * 60 * 60 * 1000);
-
-  await prisma.listing.update({
-    where: { id: listingId },
-    data: { isBoosted: true, boostExpiresAt },
+  const order = await razorpay.orders.create({
+    amount: plan.amount,
+    currency: "INR",
+    receipt: `boost_${listing.id}_${Date.now()}`,
+    notes: {
+      kind: "boost",
+      listingId: listing.id,
+      dealerId: dealer.id,
+      duration,
+    },
   });
 
   return NextResponse.json({
-    ok: true,
+    orderId: order.id,
+    amount: plan.amount,
     plan: plan.label,
-    expiresAt: boostExpiresAt,
+    keyId: process.env.RAZORPAY_KEY_ID,
   });
 }

@@ -23,14 +23,26 @@ export async function POST(req: Request) {
 
   const result = await verifyGstin(gstin);
   if (!result) {
-    return NextResponse.json({ error: "GSTIN verification failed" }, { status: 422 });
+    return NextResponse.json(
+      { error: "GSTIN verification provider is not configured" },
+      { status: 503 },
+    );
   }
 
-  // Update dealer record
+  // Only mark dealer.gstVerified=true when the upstream provider is trusted.
+  // Mock/stub results return trusted=false to avoid forged "verified" badges.
   await prisma.dealer.update({
     where: { userId: session.user.id },
-    data: { gstin: gstin.replace(/\s/g, "").toUpperCase(), gstVerified: true },
+    data: {
+      gstin: gstin.replace(/\s/g, "").toUpperCase(),
+      ...(result.trusted ? { gstVerified: true } : {}),
+    },
   });
 
-  return NextResponse.json({ verified: true, ...result });
+  return NextResponse.json({
+    verified: result.trusted,
+    legalName: result.legalName,
+    tradeName: result.tradeName,
+    address: result.address,
+  });
 }

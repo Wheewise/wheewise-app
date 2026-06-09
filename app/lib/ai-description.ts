@@ -114,3 +114,17 @@ export async function generateDescription(input: VehicleInput): Promise<string> 
 function fallback(input: VehicleInput): string {
   return fillTemplate(pick(mockDescriptions), input);
 }
+
+/**
+ * Returns the human-supplied description if it's substantive (≥20 chars),
+ * otherwise auto-generates one. The 20-char floor matches what dealers
+ * actually type vs. placeholder values like "good condition".
+ */
+export async function ensureDescription(
+  raw: string | null | undefined,
+  vehicle: VehicleInput,
+): Promise<string> {
+  const trimmed = (raw ?? "").trim();
+  if (trimmed.length >= 20) return trimmed;
+  return generateDescription(vehicle);
+}

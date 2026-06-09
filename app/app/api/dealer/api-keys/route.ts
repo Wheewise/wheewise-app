@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import crypto from "crypto";
+import { generateApiKey, hashApiKey, keyPrefixOf } from "@/lib/api-auth";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -28,20 +28,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
-  const key = `wheewise_${crypto.randomUUID().replace(/-/g, "")}`;
-
+  const plaintext = generateApiKey();
   const apiKey = await prisma.apiKey.create({
     data: {
       dealerId: dealer.id,
       name: name.trim(),
-      key,
+      keyHash: hashApiKey(plaintext),
+      keyPrefix: keyPrefixOf(plaintext),
     },
   });
 
+  // Plaintext is returned exactly once. It is NEVER persisted. The dealer
+  // must copy it now; subsequent GETs only surface the prefix.
   return NextResponse.json({
     id: apiKey.id,
     name: apiKey.name,
-    key: apiKey.key,
+    plaintextKey: plaintext,
+    keyPrefix: apiKey.keyPrefix,
     lastUsedAt: apiKey.lastUsedAt,
     createdAt: apiKey.createdAt,
   });

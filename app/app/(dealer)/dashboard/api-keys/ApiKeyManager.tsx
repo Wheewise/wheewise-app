@@ -6,7 +6,17 @@ import { Button } from "@/components/ui/Field";
 type KeyData = {
   id: string;
   name: string;
-  key: string;
+  keyPrefix: string | null;
+  isLegacy: boolean;
+  lastUsedAt: Date | null;
+  createdAt: Date;
+};
+
+type CreatedKey = {
+  id: string;
+  name: string;
+  plaintextKey: string;
+  keyPrefix: string;
   lastUsedAt: Date | null;
   createdAt: Date;
 };
@@ -16,6 +26,8 @@ export function ApiKeyManager({ existingKeys }: { existingKeys: KeyData[] }) {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [justCreated, setJustCreated] = useState<CreatedKey | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const createKey = useCallback(async () => {
     if (!newName.trim()) return;
@@ -26,8 +38,19 @@ export function ApiKeyManager({ existingKeys }: { existingKeys: KeyData[] }) {
       body: JSON.stringify({ name: newName.trim() }),
     });
     if (res.ok) {
-      const key = await res.json();
-      setKeys((prev) => [key, ...prev]);
+      const created: CreatedKey = await res.json();
+      setJustCreated(created);
+      setKeys((prev) => [
+        {
+          id: created.id,
+          name: created.name,
+          keyPrefix: created.keyPrefix,
+          isLegacy: false,
+          lastUsedAt: created.lastUsedAt,
+          createdAt: created.createdAt,
+        },
+        ...prev,
+      ]);
       setNewName("");
     }
     setCreating(false);
@@ -44,6 +67,41 @@ export function ApiKeyManager({ existingKeys }: { existingKeys: KeyData[] }) {
 
   return (
     <div className="space-y-4">
+      {justCreated ? (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
+          <p className="text-sm font-semibold text-amber-900">
+            Copy this key now — it will not be shown again
+          </p>
+          <p className="mt-1 text-xs text-amber-800">
+            Wheewise only stores a hash of your key. If you lose it, revoke and create a
+            new one.
+          </p>
+          <div className="mt-3 flex items-center gap-2">
+            <code className="flex-1 overflow-x-auto rounded border border-amber-200 bg-white px-3 py-2 font-mono text-xs">
+              {justCreated.plaintextKey}
+            </code>
+            <button
+              type="button"
+              onClick={async () => {
+                await navigator.clipboard.writeText(justCreated.plaintextKey);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+              className="rounded bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700"
+            >
+              {copied ? "Copied!" : "Copy"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setJustCreated(null)}
+              className="rounded border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+            >
+              I&apos;ve saved it
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="border-border-default bg-background rounded-lg border p-4">
         <p className="text-sm font-semibold">Create a new API key</p>
         <div className="mt-3 flex gap-2">
@@ -76,7 +134,15 @@ export function ApiKeyManager({ existingKeys }: { existingKeys: KeyData[] }) {
             >
               <div>
                 <span className="text-sm font-semibold">{k.name}</span>
-                <p className="mt-0.5 font-mono text-xs text-zinc-500">{k.key}</p>
+                {k.isLegacy ? (
+                  <span className="ml-2 inline-block rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-zinc-600 uppercase">
+                    Legacy
+                  </span>
+                ) : null}
+                <p className="mt-0.5 font-mono text-xs text-zinc-500">
+                  {k.keyPrefix ?? "—"}
+                  {k.isLegacy ? "" : "…"}
+                </p>
                 <p className="text-[11px] text-zinc-400">
                   Created {new Date(k.createdAt).toLocaleDateString()}
                   {k.lastUsedAt

@@ -6,7 +6,10 @@ import { AdminNav } from "./AdminNav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) {
+    const callbackUrl = `/admin`;
+    redirect(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+  }
   if (session.user.role !== "ADMIN") redirect("/");
 
   return (

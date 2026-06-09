@@ -1,19 +1,8 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { getDealerLoanApplications } from "@/lib/actions/finance";
 import { formatINR } from "@/lib/format";
-import { notFound } from "next/navigation";
 
 export default async function DealerLoansPage() {
-  const session = await auth();
-  if (!session?.user?.id || session.user.role !== "DEALER") notFound();
-
-  const dealer = await prisma.dealer.findUnique({
-    where: { userId: session.user.id },
-  });
-  if (!dealer) notFound();
-
-  const applications = await getDealerLoanApplications(dealer.id);
+  const applications = await getDealerLoanApplications();
 
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {

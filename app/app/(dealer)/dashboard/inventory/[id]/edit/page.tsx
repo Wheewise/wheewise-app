@@ -63,7 +63,7 @@ export default async function EditListingPage({
             transmission: listing.transmission,
             odometerKm: listing.odometerKm,
             askingPrice: Number(listing.askingPrice),
-            description: listing.description,
+            description: listing.description || undefined,
             city: listing.city,
             photoUrls: listing.photos.map((p) => p.url),
           }}
