@@ -1,0 +1,15 @@
+# Build-time env for `next build` / `cf:build`. Runtime values come from
+# Cloudflare Worker secrets + wrangler.jsonc `vars`. These exist only so
+# lib/env.ts boot validation passes during the static-analysis step of build.
+# Real values are bound to the Worker via `wrangler secret put` and `vars`.
+
+DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+AUTH_SECRET="build-time-placeholder-only-not-used-at-runtime-x"
+NEXT_PUBLIC_APP_URL="https://wheewise.workers.dev"
+
+# Explicitly blank out any dev-only flags so they don't leak from .env into
+# the prod build. lib/env.ts boot guard throws if these are set in production.
+OTP_DEV_BYPASS=
+WHEEWISE_DEV_LOGIN=
+WHEEWISE_MOCK_GST=
+WHEEWISE_MOCK_RTO=
