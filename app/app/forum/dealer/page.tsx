@@ -3,6 +3,8 @@ import { requireDealer } from "@/lib/dealer";
 import { getPosts } from "@/lib/actions/community";
 import { NewPostForm } from "@/app/community/NewPostForm";
 
+type Post = Awaited<ReturnType<typeof getPosts>>[number];
+
 export default async function DealerForumPage() {
   await requireDealer();
   const posts = await getPosts("DEALER");
@@ -30,7 +32,7 @@ export default async function DealerForumPage() {
         </div>
 
         <section className="mt-6 space-y-3">
-          {posts.map((p) => (
+          {posts.map((p: Post) => (
             <Link
               key={p.id}
               href={`/forum/dealer/${p.id}`}

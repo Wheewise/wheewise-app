@@ -9,6 +9,7 @@ export default async function TemplatesPage() {
   const templates = await prisma.notificationTemplate.findMany({
     orderBy: { name: "asc" },
   });
+  type Template = (typeof templates)[number];
 
   return (
     <div className="space-y-6">
@@ -26,7 +27,7 @@ export default async function TemplatesPage() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {templates.map((t) => (
+          {templates.map((t: Template) => (
             <div
               key={t.id}
               className="border-border-default bg-background rounded-lg border p-5"

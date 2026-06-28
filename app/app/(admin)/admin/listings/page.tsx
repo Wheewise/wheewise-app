@@ -2,6 +2,8 @@ import { getPendingModeration, removeListingByAdmin } from "@/lib/actions/admin"
 import { Button } from "@/components/ui/Field";
 import { formatINR } from "@/lib/format";
 
+type Listing = Awaited<ReturnType<typeof getPendingModeration>>[number];
+
 export default async function AdminListingsPage() {
   const listings = await getPendingModeration();
 
@@ -14,7 +16,7 @@ export default async function AdminListingsPage() {
           <div className="p-8 text-center text-sm text-zinc-500">No active listings.</div>
         ) : (
           <ul className="divide-border-default divide-y">
-            {listings.map((l) => (
+            {listings.map((l: Listing) => (
               <li key={l.id} className="flex items-center justify-between px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold">

@@ -1,6 +1,8 @@
 import { getDealerLoanApplications } from "@/lib/actions/finance";
 import { formatINR } from "@/lib/format";
 
+type Application = Awaited<ReturnType<typeof getDealerLoanApplications>>[number];
+
 export default async function DealerLoansPage() {
   const applications = await getDealerLoanApplications();
 
@@ -49,7 +51,7 @@ export default async function DealerLoansPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {applications.map((app) => (
+              {applications.map((app: Application) => (
                 <tr key={app.id}>
                   <td className="px-4 py-3 font-medium">
                     {app.listing.year} {app.listing.make} {app.listing.model}

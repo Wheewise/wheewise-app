@@ -9,6 +9,7 @@ export default async function ApiKeysPage() {
     where: { dealerId: dealer.id },
     orderBy: { createdAt: "desc" },
   });
+  type ApiKey = (typeof keys)[number];
 
   return (
     <div className="space-y-6">
@@ -20,7 +21,7 @@ export default async function ApiKeysPage() {
         </p>
       </div>
       <ApiKeyManager
-        existingKeys={keys.map((k) => ({
+        existingKeys={keys.map((k: ApiKey) => ({
           id: k.id,
           name: k.name,
           // Pre-migration keys have plaintext `key` but no `keyPrefix`. Show

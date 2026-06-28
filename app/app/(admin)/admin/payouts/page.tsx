@@ -1,6 +1,8 @@
 import { getPayouts, updatePayoutStatus } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/Field";
 
+type Payout = Awaited<ReturnType<typeof getPayouts>>[number];
+
 export default async function AdminPayoutsPage() {
   const payouts = await getPayouts();
 
@@ -15,7 +17,7 @@ export default async function AdminPayoutsPage() {
           </div>
         ) : (
           <ul className="divide-border-default divide-y">
-            {payouts.map((p) => (
+            {payouts.map((p: Payout) => (
               <li key={p.id} className="flex items-center justify-between px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">

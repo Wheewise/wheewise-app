@@ -2,6 +2,8 @@ import { requireDealer } from "@/lib/dealer";
 import { getDealerPayouts } from "@/lib/actions/admin";
 import { CheckoutButton } from "./CheckoutButton";
 
+type Payout = Awaited<ReturnType<typeof getDealerPayouts>>[number];
+
 const plans = [
   {
     id: "MONTHLY",
@@ -107,7 +109,7 @@ export default async function BillingPage() {
           <p className="mt-2 text-sm text-zinc-500">No payouts yet.</p>
         ) : (
           <div className="border-border-default bg-background mt-3 rounded-lg border">
-            {payouts.map((p) => (
+            {payouts.map((p: Payout) => (
               <div
                 key={p.id}
                 className="flex items-center justify-between border-b px-4 py-3 last:border-0"

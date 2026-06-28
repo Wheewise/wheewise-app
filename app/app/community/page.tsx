@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getPosts } from "@/lib/actions/community";
 import { NewPostForm } from "./NewPostForm";
 
+type Post = Awaited<ReturnType<typeof getPosts>>[number];
+
 export const dynamic = "force-dynamic";
 
 export default async function CommunityPage() {
@@ -30,7 +32,7 @@ export default async function CommunityPage() {
         </div>
 
         <section className="mt-6 space-y-3">
-          {posts.map((p) => (
+          {posts.map((p: Post) => (
             <Link
               key={p.id}
               href={`/community/${p.id}`}

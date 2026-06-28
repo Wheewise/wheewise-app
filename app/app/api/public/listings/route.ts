@@ -60,7 +60,8 @@ export async function GET(req: Request) {
     prisma.listing.count({ where }),
   ]);
 
-  const data = listings.map((l) => ({
+  type PublicListing = (typeof listings)[number];
+  const data = listings.map((l: PublicListing) => ({
     id: l.id,
     make: l.make,
     model: l.model,

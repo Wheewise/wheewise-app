@@ -5,6 +5,8 @@ import {
 } from "@/lib/actions/inspections";
 import { Button } from "@/components/ui/Field";
 
+type Inspector = Awaited<ReturnType<typeof getInspectors>>[number];
+
 export default async function AdminInspectorsPage() {
   const inspectors = await getInspectors();
 
@@ -19,7 +21,7 @@ export default async function AdminInspectorsPage() {
           </div>
         ) : (
           <ul className="divide-border-default divide-y">
-            {inspectors.map((i) => (
+            {inspectors.map((i: Inspector) => (
               <li key={i.id} className="flex items-center justify-between px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">

@@ -13,15 +13,17 @@ export default async function DealerInspectionsPage() {
     },
     orderBy: { createdAt: "desc" },
   });
+  type Inspection = (typeof inspections)[number];
 
   const listings = await prisma.listing.findMany({
     where: { dealerId: dealer.id, status: "ACTIVE" },
     select: { id: true, make: true, model: true, year: true },
     orderBy: { createdAt: "desc" },
   });
+  type InspectableListing = (typeof listings)[number];
 
   const inspectedIds = new Set(
-    inspections.filter((i) => i.status !== "CANCELLED").map((i) => i.listingId),
+    inspections.filter((i: Inspection) => i.status !== "CANCELLED").map((i: Inspection) => i.listingId),
   );
 
   return (
@@ -35,15 +37,15 @@ export default async function DealerInspectionsPage() {
 
       <section>
         <h2 className="text-base font-semibold">Request inspection</h2>
-        {listings.filter((l) => !inspectedIds.has(l.id)).length === 0 ? (
+        {listings.filter((l: InspectableListing) => !inspectedIds.has(l.id)).length === 0 ? (
           <p className="mt-2 text-sm text-zinc-500">
             All your active listings already have inspections in progress.
           </p>
         ) : (
           <div className="border-border-default bg-background mt-3 rounded-lg border">
             {listings
-              .filter((l) => !inspectedIds.has(l.id))
-              .map((l) => (
+              .filter((l: InspectableListing) => !inspectedIds.has(l.id))
+              .map((l: InspectableListing) => (
                 <div
                   key={l.id}
                   className="flex items-center justify-between border-b px-4 py-3 last:border-0"
@@ -64,7 +66,7 @@ export default async function DealerInspectionsPage() {
           <p className="mt-2 text-sm text-zinc-500">No inspections yet.</p>
         ) : (
           <div className="border-border-default bg-background mt-3 rounded-lg border">
-            {inspections.map((i) => (
+            {inspections.map((i: Inspection) => (
               <div
                 key={i.id}
                 className="flex items-center justify-between border-b px-4 py-3 last:border-0"

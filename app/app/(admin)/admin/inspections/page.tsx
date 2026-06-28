@@ -5,13 +5,16 @@ import {
 } from "@/lib/actions/inspections";
 import { Button } from "@/components/ui/Field";
 
+type Inspector = Awaited<ReturnType<typeof getInspectors>>[number];
+type Inspection = Awaited<ReturnType<typeof getInspections>>[number];
+
 export default async function AdminInspectionsPage() {
   const [inspections, inspectors] = await Promise.all([
     getInspections(),
     getInspectors(),
   ]);
 
-  const approved = inspectors.filter((i) => i.status === "APPROVED");
+  const approved = inspectors.filter((i: Inspector) => i.status === "APPROVED");
 
   return (
     <div className="space-y-6">
@@ -24,7 +27,7 @@ export default async function AdminInspectionsPage() {
           </div>
         ) : (
           <ul className="divide-border-default divide-y">
-            {inspections.map((i) => (
+            {inspections.map((i: Inspection) => (
               <li key={i.id} className="flex items-center justify-between px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -71,7 +74,7 @@ export default async function AdminInspectionsPage() {
                       className="rounded border px-2 py-1 text-xs"
                     >
                       <option value="">Assign inspector…</option>
-                      {approved.map((ins) => (
+                      {approved.map((ins: Inspector) => (
                         <option key={ins.id} value={ins.id}>
                           {ins.user.name ?? ins.user.email}
                         </option>

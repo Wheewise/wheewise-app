@@ -36,20 +36,22 @@ export async function GET() {
     // for conversations that have no messages yet.
     orderBy: [{ lastMessageAt: { sort: "desc", nulls: "last" } }, { updatedAt: "desc" }],
   });
+  type Conversation = (typeof conversations)[number];
 
   const unreadCounts = await prisma.message.groupBy({
     by: ["conversationId"],
     where: {
-      conversationId: { in: conversations.map((c) => c.id) },
+      conversationId: { in: conversations.map((c: Conversation) => c.id) },
       senderId: { not: userId },
       readAt: null,
     },
     _count: { id: true },
   });
 
-  const unreadMap = new Map(unreadCounts.map((u) => [u.conversationId, u._count.id]));
+  type UnreadCount = (typeof unreadCounts)[number];
+  const unreadMap = new Map(unreadCounts.map((u: UnreadCount) => [u.conversationId, u._count.id]));
 
-  const result = conversations.map((c) => ({
+  const result = conversations.map((c: Conversation) => ({
     id: c.id,
     listing: {
       id: c.listing.id,

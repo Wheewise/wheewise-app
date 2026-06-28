@@ -12,6 +12,7 @@ export default async function AdminPage() {
     orderBy: { createdAt: "desc" },
     take: 5,
   });
+  type RecentDealer = (typeof recentDealers)[number];
 
   return (
     <div className="space-y-8">
@@ -32,7 +33,7 @@ export default async function AdminPage() {
           <div className="p-8 text-center text-sm text-zinc-500">No dealers yet.</div>
         ) : (
           <ul className="divide-border-default divide-y">
-            {recentDealers.map((d) => (
+            {recentDealers.map((d: RecentDealer) => (
               <li key={d.id} className="flex items-center justify-between px-5 py-3">
                 <div>
                   <div className="text-sm font-medium">{d.businessName}</div>

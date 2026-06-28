@@ -47,8 +47,9 @@ export default async function ComparePage({
       dealer: { select: { businessName: true, city: true } },
     },
   });
+  type ComparedListing = (typeof listings)[number];
 
-  const ordered = idList.map((id) => listings.find((l) => l.id === id)).filter(Boolean);
+  const ordered = idList.map((id) => listings.find((l: ComparedListing) => l.id === id)).filter(Boolean);
 
   if (ordered.length < 2) {
     return (

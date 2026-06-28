@@ -6,6 +6,8 @@ import {
 } from "@/lib/actions/community";
 import { Button } from "@/components/ui/Field";
 
+type Post = Awaited<ReturnType<typeof getAllPosts>>[number];
+
 export default async function AdminCommunityPage() {
   const posts = await getAllPosts();
 
@@ -18,7 +20,7 @@ export default async function AdminCommunityPage() {
           <div className="p-8 text-center text-sm text-zinc-500">No posts yet.</div>
         ) : (
           <ul className="divide-border-default divide-y">
-            {posts.map((p) => (
+            {posts.map((p: Post) => (
               <li key={p.id} className="flex items-center justify-between px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">

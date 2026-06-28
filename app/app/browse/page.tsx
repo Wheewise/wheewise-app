@@ -62,6 +62,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   });
 
   const listings = result.data;
+  type BrowseListing = (typeof listings)[number];
   const total = result.meta.total;
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -182,7 +183,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {listings.map((l) => (
+              {listings.map((l: BrowseListing) => (
                 <ListingCard
                   key={l.id}
                   listing={{

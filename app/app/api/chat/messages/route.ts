@@ -50,9 +50,10 @@ export async function GET(req: Request) {
     take: 100,
   });
 
+  type Message = (typeof messages)[number];
   const unreadIds = messages
-    .filter((m) => m.senderId !== session.user.id && !m.readAt)
-    .map((m) => m.id);
+    .filter((m: Message) => m.senderId !== session.user.id && !m.readAt)
+    .map((m: Message) => m.id);
 
   if (unreadIds.length > 0) {
     await prisma.message.updateMany({

@@ -1,6 +1,8 @@
 import { getDealers, suspendDealer } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/Field";
 
+type Dealer = Awaited<ReturnType<typeof getDealers>>[number];
+
 export default async function AdminDealersPage() {
   const dealers = await getDealers();
 
@@ -13,7 +15,7 @@ export default async function AdminDealersPage() {
           <div className="p-8 text-center text-sm text-zinc-500">No dealers.</div>
         ) : (
           <ul className="divide-border-default divide-y">
-            {dealers.map((d) => (
+            {dealers.map((d: Dealer) => (
               <li key={d.id} className="flex items-center justify-between px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">

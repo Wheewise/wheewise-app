@@ -24,6 +24,7 @@ export default async function InventoryPage(props: {
     },
   });
 
+  type Listing = (typeof listings)[number];
   let nextCursor: string | undefined = undefined;
   if (listings.length > limit) {
     const nextItem = listings.pop();
@@ -68,7 +69,7 @@ export default async function InventoryPage(props: {
               </tr>
             </thead>
             <tbody className="divide-border-default divide-y">
-              {listings.map((l) => (
+              {listings.map((l: Listing) => (
                 <tr key={l.id}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
