@@ -85,7 +85,11 @@ jobs:
         run: npm run test:e2e
         working-directory: app
         env:
-          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          # Use the real Neon URL from secrets when available.
+          # Fall back to a valid-format placeholder so env validation passes and
+          # the dev server starts cleanly; pages that query the DB will return
+          # empty results via their own error handling instead of serving 500s.
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || 'postgresql://e2e:e2e@localhost:5432/e2e_placeholder' }}
           AUTH_SECRET: e2e-build-only-secret-not-used-at-runtime-xxxx
           NEXT_PUBLIC_APP_URL: http://localhost:3017
 

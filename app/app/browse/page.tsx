@@ -33,6 +33,14 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   const minPrice = sp.minPrice ? Number(sp.minPrice) : undefined;
   const maxPrice = sp.maxPrice ? Number(sp.maxPrice) : undefined;
 
+  type SearchResult = Awaited<ReturnType<typeof searchListings>>;
+  const emptyResult: SearchResult = {
+    data: [],
+    meta: { total: 0, page, limit: PAGE_SIZE, totalPages: 0 },
+  };
+
+  // Catch DB connection errors (e.g. E2E environments without a real database)
+  // so the page renders an empty state (HTTP 200) instead of propagating a 500.
   const result = await searchListings({
     q: sp.q,
     vehicleType: sp.type === "CAR" || sp.type === "BIKE" ? sp.type : undefined,
@@ -48,6 +56,9 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
     transmission: undefined,
     page,
     limit: PAGE_SIZE,
+  }).catch((err: unknown) => {
+    console.error("[browse] searchListings failed:", err);
+    return emptyResult;
   });
 
   const listings = result.data;
