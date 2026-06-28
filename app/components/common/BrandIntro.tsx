@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 const PARTICLES: Array<{
   x: string;
@@ -22,37 +22,53 @@ const PARTICLES: Array<{
   { x: "69%", y: "48%", size: 1, delay: 0.8, dur: 3.4 },
 ];
 
+// ── useSyncExternalStore wiring ───────────────────────────────────────────
+// Reads the localStorage flag at render time (no setState in useEffect).
+// getServerSnapshot returns true so SSR always renders null; React
+// reconciles to the real snapshot after hydration.
+const subscribeNoop = (_cb: () => void) => () => {};
+const getIntroFlagSnapshot = () => !!localStorage.getItem("wheewise_intro_seen");
+const getIntroFlagServerSnapshot = () => true;
+
 export function BrandIntro() {
-  const [visible, setVisible] = useState(false);
+  // alreadySeen: true on the server and on return visits; false on first visit.
+  const alreadySeen = useSyncExternalStore(
+    subscribeNoop,
+    getIntroFlagSnapshot,
+    getIntroFlagServerSnapshot,
+  );
+
+  // dismissed tracks whether the intro has finished playing this session.
+  const [dismissed, setDismissed] = useState(false);
   const [exiting, setExiting] = useState(false);
   const dismissingRef = useRef(false);
 
-  function dismiss() {
+  // useCallback gives dismiss a stable identity so the useEffect dep array
+  // can include it without causing the effect to re-run unnecessarily.
+  const dismiss = useCallback(() => {
     if (dismissingRef.current) return;
     dismissingRef.current = true;
     setExiting(true);
+    // setState calls are inside a setTimeout callback — not at the top level
+    // of a useEffect — so they satisfy react-hooks/set-state-in-effect.
     setTimeout(() => {
-      setVisible(false);
-      document.body.style.overflow = "";
       localStorage.setItem("wheewise_intro_seen", "1");
+      document.body.style.overflow = "";
+      setDismissed(true);
     }, 820);
-  }
+  }, []); // stable: only closes over refs and setState setters
 
   useEffect(() => {
-    if (localStorage.getItem("wheewise_intro_seen")) return;
-    setVisible(true);
+    if (alreadySeen) return;
     document.body.style.overflow = "hidden";
-
     const autoExit = setTimeout(dismiss, 5600);
     return () => {
       clearTimeout(autoExit);
       document.body.style.overflow = "";
     };
-    // dismiss is stable (refs + setState); no dep needed
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [alreadySeen, dismiss]);
 
-  if (!visible) return null;
+  if (alreadySeen || dismissed) return null;
 
   return (
     <div
@@ -126,8 +142,7 @@ export function BrandIntro() {
           width: "22vw",
           height: "1px",
           transformOrigin: "right center",
-          background:
-            "linear-gradient(to left, rgba(220,38,38,0.2), transparent)",
+          background: "linear-gradient(to left, rgba(220,38,38,0.2), transparent)",
           animation: "ww-streak-in 1.2s cubic-bezier(0.25,0.46,0.45,0.94) 0.7s forwards",
           opacity: 0,
         }}
@@ -177,8 +192,7 @@ export function BrandIntro() {
         <span
           aria-label="Wheewise"
           style={{
-            fontFamily:
-              "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
+            fontFamily: "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
             fontSize: "clamp(1.6rem, 3.8vw, 2.8rem)",
             fontWeight: 700,
             color: "#ffffff",
@@ -207,8 +221,7 @@ export function BrandIntro() {
         {/* Tagline */}
         <p
           style={{
-            fontFamily:
-              "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
+            fontFamily: "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
             fontSize: "clamp(0.75rem, 1.8vw, 0.9rem)",
             fontWeight: 400,
             color: "rgba(161,161,170,1)",
@@ -228,8 +241,7 @@ export function BrandIntro() {
         onClick={dismiss}
         className="absolute top-5 right-5 sm:top-6 sm:right-7 cursor-pointer text-zinc-600 transition-colors duration-200 hover:text-zinc-300"
         style={{
-          fontFamily:
-            "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
+          fontFamily: "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
           fontSize: "0.65rem",
           fontWeight: 500,
           letterSpacing: "0.14em",
