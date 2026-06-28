@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { BrandIntro } from "@/components/common/BrandIntro";
 import { CookieConsent } from "@/components/ui/CookieConsent";
 import { Footer } from "@/components/brand/Footer";
 
@@ -36,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="bg-background text-foreground flex min-h-full flex-col">
+        <BrandIntro />
         {children}
         <Footer />
         <CookieConsent />

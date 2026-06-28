@@ -43,3 +43,44 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+/* ─── Brand intro keyframes ─────────────────────────────────────────────── */
+
+@keyframes ww-glow-emerge {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes ww-streak-in {
+  0%   { opacity: 0; transform: scaleX(0); }
+  35%  { opacity: 0.6; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+
+@keyframes ww-particle-drift {
+  0%   { opacity: 0; transform: translate(0, 0); }
+  18%  { opacity: 0.75; }
+  78%  { opacity: 0.2; }
+  100% { opacity: 0; transform: translate(-14px, -80px); }
+}
+
+@keyframes ww-logo-appear {
+  0%   { opacity: 0; transform: scale(0.84); filter: blur(6px); }
+  60%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes ww-brand-text {
+  0%   { opacity: 0; letter-spacing: 0.42em; }
+  100% { opacity: 1; letter-spacing: 0.2em; }
+}
+
+@keyframes ww-fade-up {
+  0%   { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ww-intro-exit {
+  0%   { opacity: 1; }
+  100% { opacity: 0; pointer-events: none; }
+}
