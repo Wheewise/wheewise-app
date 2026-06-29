@@ -56,9 +56,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: quality
-    # Don't fail the whole CI if e2e flakes — they need a real seeded DB.
-    # Once a managed dev DB is wired in, remove continue-on-error.
-    continue-on-error: true
+
+    # Spin up a real Postgres instance so the showcase/browse pages can query
+    # seeded data instead of hitting the Neon WebSocket proxy with a placeholder URL.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: e2e
+          POSTGRES_PASSWORD: e2e
+          POSTGRES_DB: e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -81,17 +95,22 @@ jobs:
         run: npm run db:generate
         working-directory: app
 
+      - name: Migrate and seed database
+        run: |
+          npx prisma migrate deploy
+          npm run db:seed
+        working-directory: app
+        env:
+          DATABASE_URL: postgresql://e2e:e2e@localhost:5432/e2e
+
       - name: Run E2E
         run: npm run test:e2e
         working-directory: app
         env:
-          # Use the real Neon URL from secrets when available.
-          # Fall back to a valid-format placeholder so env validation passes and
-          # the dev server starts cleanly; pages that query the DB will return
-          # empty results via their own error handling instead of serving 500s.
-          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || 'postgresql://e2e:e2e@localhost:5432/e2e_placeholder' }}
+          DATABASE_URL: postgresql://e2e:e2e@localhost:5432/e2e
           AUTH_SECRET: e2e-build-only-secret-not-used-at-runtime-xxxx
           NEXT_PUBLIC_APP_URL: http://localhost:3017
+          E2E_DEMO_SLUG: sharma-auto-indore
 
       - name: Upload Playwright report on failure
         if: failure()
