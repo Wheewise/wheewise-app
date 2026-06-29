@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Lint, Typecheck, Unit Test & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: app
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+        working-directory: app
+
+      - name: Lint
+        run: npm run lint
+        working-directory: app
+
+      - name: Typecheck
+        run: npm run typecheck
+        working-directory: app
+
+      - name: Unit tests
+        run: npm run test
+        working-directory: app
+
+      - name: Build
+        run: npm run build
+        working-directory: app
+        env:
+          # Build requires env validation to pass. These are placeholders that
+          # only have to satisfy lib/env.ts's Zod schema during `next build`.
+          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+          AUTH_SECRET: dummy-build-only-secret-not-used-at-runtime-xx
+          NEXT_PUBLIC_APP_URL: https://wheewise.in
+
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: quality
+    # Don't fail the whole CI if e2e flakes — they need a real seeded DB.
+    # Once a managed dev DB is wired in, remove continue-on-error.
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: app
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: app
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+        working-directory: app
+
+      - name: Run E2E
+        run: npm run test:e2e
+        working-directory: app
+        env:
+          # Use the real Neon URL from secrets when available.
+          # Fall back to a valid-format placeholder so env validation passes and
+          # the dev server starts cleanly; pages that query the DB will return
+          # empty results via their own error handling instead of serving 500s.
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || 'postgresql://e2e:e2e@localhost:5432/e2e_placeholder' }}
+          AUTH_SECRET: e2e-build-only-secret-not-used-at-runtime-xxxx
+          NEXT_PUBLIC_APP_URL: http://localhost:3017
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: app/playwright-report/
+          retention-days: 7

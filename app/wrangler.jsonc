@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "wheewise",
+  "compatibility_date": "2026-05-07",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "observability": {
+    "enabled": true,
+  },
+  // Public, build-/runtime-readable env. Secrets are NOT here — bind them
+  // via `wrangler secret put DATABASE_URL`, `wrangler secret put AUTH_SECRET`.
+  // After the first deploy, update NEXT_PUBLIC_APP_URL + AUTH_URL to the
+  // assigned workers.dev hostname (or custom domain) and redeploy.
+  "vars": {
+    "NEXT_PUBLIC_APP_URL": "https://wheewise.workers.dev",
+    "AUTH_URL": "https://wheewise.workers.dev",
+    "AUTH_TRUST_HOST": "true",
+    "NODE_ENV": "production",
+  },
+  // KV namespaces for rate-limit + OTP. Create them with
+  //   wrangler kv namespace create RATE_LIMIT_KV
+  //   wrangler kv namespace create OTP_KV
+  // then paste the returned ids below and uncomment.
+  // "kv_namespaces": [
+  //   { "binding": "RATE_LIMIT_KV", "id": "<id-from-wrangler-kv-create>" },
+  //   { "binding": "OTP_KV",        "id": "<id-from-wrangler-kv-create>" }
+  // ],
+}
