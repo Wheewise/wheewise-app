@@ -102,6 +102,7 @@ jobs:
         working-directory: app
         env:
           DATABASE_URL: postgresql://e2e:e2e@localhost:5432/e2e
+          NODE_ENV: development
 
       - name: Run E2E
         run: npm run test:e2e
@@ -111,6 +112,14 @@ jobs:
           AUTH_SECRET: e2e-build-only-secret-not-used-at-runtime-xxxx
           NEXT_PUBLIC_APP_URL: http://localhost:3017
           E2E_DEMO_SLUG: sharma-auto-indore
+          # Run as development so the server accepts dev-only flags at startup
+          NODE_ENV: development
+          # Mock external KYC/RTO APIs — real credentials are not available in CI
+          WHEEWISE_MOCK_GST: 1
+          WHEEWISE_MOCK_RTO: 1
+          # Bypass OTP check and enable instant dev sign-in for E2E flows
+          OTP_DEV_BYPASS: 1
+          WHEEWISE_DEV_LOGIN: 1
 
       - name: Upload Playwright report on failure
         if: failure()
