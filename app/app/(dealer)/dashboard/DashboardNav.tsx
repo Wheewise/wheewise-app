@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 
 const items = [
   { href: "/dashboard", label: "Overview", exact: true },
+  { href: "/dashboard/analytics", label: "Analytics" },
   { href: "/dashboard/inventory", label: "Inventory" },
   { href: "/dashboard/leads", label: "Leads" },
   { href: "/dashboard/store", label: "Storefront" },

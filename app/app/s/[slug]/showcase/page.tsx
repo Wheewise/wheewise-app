@@ -76,10 +76,16 @@ export default async function ShowcasePage({
   const { slug } = await params;
   const sp = await searchParams;
 
-  const store = await prisma.store.findUnique({
-    where: { slug },
-    include: { dealer: true },
-  });
+  let store;
+  try {
+    store = await prisma.store.findUnique({
+      where: { slug },
+      include: { dealer: true },
+    });
+  } catch (err) {
+    console.error("[showcase] DB unavailable:", err);
+    notFound();
+  }
   if (!store) notFound();
 
   const dealer = store.dealer;
@@ -150,7 +156,10 @@ export default async function ShowcasePage({
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
-  ]);
+  ]).catch((err: unknown) => {
+    console.error("[showcase] inventory fetch failed:", err);
+    notFound(); // returns `never` — preserves the Promise.all tuple type for TS
+  });
 
   const trustScore = computeTrustScore({
     gstVerified: dealer.gstVerified,
