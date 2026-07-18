@@ -72,20 +72,28 @@ export async function createListing(
     city: data.city,
   });
 
+  // Sequential creates rather than one nested Listing->Photos/Photos360
+  // write: a nested create needs an interactive transaction, which Neon's
+  // HTTP-mode adapter (used in every environment now — see lib/db.ts) can't
+  // provide. Each call below is one independent INSERT.
   const listing = await prisma.listing.create({
     data: {
       ...data,
       description: finalDescription,
       dealerId: dealer.id,
-      photos: {
-        create: photoUrls.map((url, i) => ({ url, sortOrder: i })),
-      },
-      photos360:
-        photo360.length > 0
-          ? { create: photo360.map((p) => ({ url: p.url, angle: p.angle })) }
-          : undefined,
     },
   });
+
+  if (photoUrls.length > 0) {
+    await prisma.listingPhoto.createMany({
+      data: photoUrls.map((url, i) => ({ listingId: listing.id, url, sortOrder: i })),
+    });
+  }
+  if (photo360.length > 0) {
+    await prisma.listing360Photo.createMany({
+      data: photo360.map((p) => ({ listingId: listing.id, url: p.url, angle: p.angle })),
+    });
+  }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/inventory");
@@ -156,45 +164,38 @@ export async function updateListing(
     .map((p) => p.id);
   const toAdd360 = photo360.filter((p) => !existing360Urls.has(p.url));
 
-  await prisma.$transaction([
-    prisma.listing.update({
-      where: { id: listingId },
-      data: {
-        ...data,
-        description: finalDescription,
-      },
-    }),
-    ...(toDelete.length > 0
-      ? [prisma.listingPhoto.deleteMany({ where: { id: { in: toDelete } } })]
-      : []),
-    ...(toAdd.length > 0
-      ? [
-          prisma.listingPhoto.createMany({
-            data: toAdd.map((p) => ({ listingId, url: p.url, sortOrder: p.sortOrder })),
-          }),
-        ]
-      : []),
-    ...photoUrls
-      .map((url, index) => {
-        const photoId = existingPhotos.find((p) => p.url === url)?.id;
-        if (!photoId) return null;
-        return prisma.listingPhoto.update({
-          where: { id: photoId },
-          data: { sortOrder: index },
-        });
-      })
-      .filter((op): op is NonNullable<typeof op> => op !== null),
-    ...(toDelete360.length > 0
-      ? [prisma.listing360Photo.deleteMany({ where: { id: { in: toDelete360 } } })]
-      : []),
-    ...(toAdd360.length > 0
-      ? [
-          prisma.listing360Photo.createMany({
-            data: toAdd360.map((p) => ({ listingId, url: p.url, angle: p.angle })),
-          }),
-        ]
-      : []),
-  ]);
+  // Sequential operations rather than $transaction([...]): Neon's HTTP-mode
+  // adapter (used in every environment now — see lib/db.ts) can't run
+  // interactive transactions. Same ordering as before, just not atomic.
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: {
+      ...data,
+      description: finalDescription,
+    },
+  });
+
+  if (toDelete.length > 0) {
+    await prisma.listingPhoto.deleteMany({ where: { id: { in: toDelete } } });
+  }
+  if (toAdd.length > 0) {
+    await prisma.listingPhoto.createMany({
+      data: toAdd.map((p) => ({ listingId, url: p.url, sortOrder: p.sortOrder })),
+    });
+  }
+  for (const [index, url] of photoUrls.entries()) {
+    const photoId = existingPhotos.find((p) => p.url === url)?.id;
+    if (!photoId) continue;
+    await prisma.listingPhoto.update({ where: { id: photoId }, data: { sortOrder: index } });
+  }
+  if (toDelete360.length > 0) {
+    await prisma.listing360Photo.deleteMany({ where: { id: { in: toDelete360 } } });
+  }
+  if (toAdd360.length > 0) {
+    await prisma.listing360Photo.createMany({
+      data: toAdd360.map((p) => ({ listingId, url: p.url, angle: p.angle })),
+    });
+  }
 
   // Log orphaned photo count for future cleanup job
   if (toDelete.length > 0) {
