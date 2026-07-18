@@ -2,6 +2,7 @@ import "./env";
 
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeon, PrismaNeonHTTP } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { neonConfig } from "@neondatabase/serverless";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
@@ -39,7 +40,10 @@ function createClient(): PrismaClient {
   }
 
   // Fallback: standard TCP connection for local / CI Postgres instances.
-  return new PrismaClient({ log });
+  // The generator's engineType="client" (see schema.prisma) requires an
+  // adapter unconditionally — there's no more built-in native-engine path —
+  // so this plain-Postgres case needs its own adapter too.
+  return new PrismaClient({ adapter: new PrismaPg({ connectionString: DATABASE_URL }), log });
 }
 
 export const prisma = globalForPrisma.prisma ?? createClient();

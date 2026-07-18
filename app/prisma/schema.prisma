@@ -2,7 +2,8 @@
 // See WHEEWISE_SDD.md §6 for the v2 superset.
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  engineType = "client"
 }
 
 datasource db {
