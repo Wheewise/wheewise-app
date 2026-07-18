@@ -3,7 +3,15 @@
   "main": ".open-next/worker.js",
   "name": "wheewise",
   "compatibility_date": "2026-05-07",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public",
+    // Prisma caches its WASM-init Promise across requests (Bi[provider]).
+    // Workers' default cross-request Promise interception cancels that
+    // Promise's continuations once the creating request ends, breaking every
+    // Prisma call after the first. This flag opts back out for that cache.
+    "no_handle_cross_request_promise_resolution",
+  ],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS",
@@ -16,8 +24,8 @@
   // After the first deploy, update NEXT_PUBLIC_APP_URL + AUTH_URL to the
   // assigned workers.dev hostname (or custom domain) and redeploy.
   "vars": {
-    "NEXT_PUBLIC_APP_URL": "https://wheewise.workers.dev",
-    "AUTH_URL": "https://wheewise.workers.dev",
+    "NEXT_PUBLIC_APP_URL": "https://wheewise.wheewise.workers.dev",
+    "AUTH_URL": "https://wheewise.wheewise.workers.dev",
     "AUTH_TRUST_HOST": "true",
     "NODE_ENV": "production",
   },

@@ -109,10 +109,16 @@ export async function signupDealer(
     return { ok: false, errors: flattenErrors(parsed.error) };
   }
 
-  const existing = await prisma.user.findUnique({
-    where: { email: parsed.data.email },
-    select: { id: true },
-  });
+  let existing;
+  try {
+    existing = await prisma.user.findUnique({
+      where: { email: parsed.data.email },
+      select: { id: true },
+    });
+  } catch (err) {
+    console.error("[signupDealer] findUnique(user by email) failed:", err);
+    throw err;
+  }
   if (existing) {
     return { ok: false, errors: { email: ["Email already in use"] } };
   }
@@ -120,6 +126,69 @@ export async function signupDealer(
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
   const trialEnds = new Date();
   trialEnds.setDate(trialEnds.getDate() + 14);
+
+  // Sequential single-table creates rather than one nested User->Dealer->
+  // Store/Subscription write: a nested create needs an interactive
+  // transaction, which the Cloudflare Workers Neon HTTP adapter cannot do.
+  // Each call below is one independent INSERT, so no transaction is needed.
+  // `user.delete` cascades to Dealer/Store/Subscription (see schema), so it's
+  // the single compensating action if a later step fails.
+  let user;
+  try {
+    user = await prisma.user.create({
+      data: {
+        email: parsed.data.email,
+        name: parsed.data.name,
+        passwordHash,
+        role: "DEALER",
+      },
+    });
+  } catch (err) {
+    console.error("[signupDealer] user.create failed:", err);
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return { ok: false, errors: { email: ["Email already in use"] } };
+    }
+    throw err;
+  }
+
+  let dealer;
+  try {
+    dealer = await prisma.dealer.create({
+      data: {
+        userId: user.id,
+        businessName: parsed.data.businessName,
+        city: parsed.data.city,
+        phone: parsed.data.phone,
+        whatsapp: parsed.data.whatsapp,
+      },
+    });
+  } catch (err) {
+    console.error("[signupDealer] dealer.create failed:", err);
+    await prisma.user.delete({ where: { id: user.id } }).catch((cleanupErr) => {
+      console.error("[signupDealer] cleanup after dealer.create failure also failed:", cleanupErr);
+    });
+    throw err;
+  }
+
+  try {
+    await prisma.subscription.create({
+      data: {
+        dealerId: dealer.id,
+        plan: "FREE_TRIAL",
+        status: "TRIALING",
+        currentPeriodEnd: trialEnds,
+      },
+    });
+  } catch (err) {
+    console.error("[signupDealer] subscription.create failed:", err);
+    await prisma.user.delete({ where: { id: user.id } }).catch((cleanupErr) => {
+      console.error(
+        "[signupDealer] cleanup after subscription.create failure also failed:",
+        cleanupErr,
+      );
+    });
+    throw err;
+  }
 
   // Retry loop: handles slug uniqueness race condition (P2002 unique constraint violation).
   // Crypto-random suffix avoids predictable retries that could collide again.
@@ -130,33 +199,14 @@ export async function signupDealer(
     const slug = (await generateUniqueSlug(parsed.data.businessName)) + suffix;
 
     try {
-      await prisma.user.create({
-        data: {
-          email: parsed.data.email,
-          name: parsed.data.name,
-          passwordHash,
-          role: "DEALER",
-          dealer: {
-            create: {
-              businessName: parsed.data.businessName,
-              city: parsed.data.city,
-              phone: parsed.data.phone,
-              whatsapp: parsed.data.whatsapp,
-              store: { create: { slug } },
-              subscription: {
-                create: {
-                  plan: "FREE_TRIAL",
-                  status: "TRIALING",
-                  currentPeriodEnd: trialEnds,
-                },
-              },
-            },
-          },
-        },
-      });
+      await prisma.store.create({ data: { dealerId: dealer.id, slug } });
       created = true;
       break;
     } catch (err) {
+      console.error(
+        `[signupDealer] store.create attempt ${attempt} failed (slug=${slug}):`,
+        err,
+      );
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
         continue;
       }
@@ -166,6 +216,9 @@ export async function signupDealer(
 
   if (!created) {
     // All retries collided. Surface as a form error rather than pretending success.
+    await prisma.user.delete({ where: { id: user.id } }).catch((cleanupErr) => {
+      console.error("[signupDealer] cleanup after slug exhaustion also failed:", cleanupErr);
+    });
     return {
       ok: false,
       errors: {
@@ -176,11 +229,16 @@ export async function signupDealer(
     };
   }
 
-  await signIn("credentials", {
-    email: parsed.data.email,
-    password: parsed.data.password,
-    redirect: false,
-  });
+  try {
+    await signIn("credentials", {
+      email: parsed.data.email,
+      password: parsed.data.password,
+      redirect: false,
+    });
+  } catch (err) {
+    console.error("[signupDealer] signIn after account creation failed:", err);
+    throw err;
+  }
 
   redirect("/dashboard");
 }
