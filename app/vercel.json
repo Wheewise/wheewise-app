@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "installCommand": "npm install",
-  "buildCommand": "npx prisma generate && next build --webpack",
-  "outputDirectory": ".next"
+  "buildCommand": "npx prisma generate && next build",
+  "installCommand": "npm install --legacy-peer-deps",
+  "nodeVersion": "22"
 }
