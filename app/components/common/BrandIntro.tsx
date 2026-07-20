@@ -169,8 +169,9 @@ export function BrandIntro() {
 
       {/* ── Centre content ───────────────────────────────────────── */}
       <div className="relative flex flex-col items-center gap-5 px-6 text-center">
-        {/* Logo mark */}
+        {/* Motion mark */}
         <div
+          className="h-36 w-36 md:h-52 md:w-52"
           style={{
             animation: "ww-logo-appear 1.3s cubic-bezier(0.16,1,0.3,1) 1.4s forwards",
             opacity: 0,
@@ -178,32 +179,36 @@ export function BrandIntro() {
               "drop-shadow(0 0 32px rgba(220,38,38,0.40)) drop-shadow(0 0 10px rgba(220,38,38,0.22))",
           }}
         >
-          <Image
-            src="/brand/wheewise.png"
-            alt="Wheewise logo"
-            width={88}
-            height={88}
-            priority
-            style={{ width: 88, height: 88, objectFit: "contain" }}
+          <video
+            src="/ww-motion.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="h-full w-full object-contain"
           />
         </div>
 
-        {/* Brand name */}
-        <span
-          aria-label="Wheewise"
+        {/* Wordmark */}
+        <div
           style={{
-            fontFamily: "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
-            fontSize: "clamp(1.6rem, 3.8vw, 2.8rem)",
-            fontWeight: 700,
-            color: "#ffffff",
-            letterSpacing: "0.2em",
             animation: "ww-brand-text 1s cubic-bezier(0.16,1,0.3,1) 3s forwards",
             opacity: 0,
-            display: "block",
           }}
         >
-          WHEEWISE
-        </span>
+          <Image
+            src="/wheewise-wordmark.png"
+            alt="Wheewise"
+            width={627}
+            height={98}
+            priority
+            style={{
+              width: "clamp(140px, 24vw, 200px)",
+              height: "auto",
+              objectFit: "contain",
+            }}
+          />
+        </div>
 
         {/* Thin separator */}
         <div
