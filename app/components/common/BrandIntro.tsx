@@ -23,15 +23,17 @@ const PARTICLES: Array<{
 ];
 
 // ── useSyncExternalStore wiring ───────────────────────────────────────────
-// Reads the localStorage flag at render time (no setState in useEffect).
+// Reads the sessionStorage flag at render time (no setState in useEffect).
 // getServerSnapshot returns true so SSR always renders null; React
-// reconciles to the real snapshot after hydration.
+// reconciles to the real snapshot after hydration. sessionStorage (not
+// localStorage) is intentional: the intro should replay every new tab/
+// window, only skipping on same-tab refresh/navigation within a session.
 const subscribeNoop = (_cb: () => void) => () => {};
-const getIntroFlagSnapshot = () => !!localStorage.getItem("wheewise_intro_seen");
+const getIntroFlagSnapshot = () => !!sessionStorage.getItem("wheewise_intro_seen");
 const getIntroFlagServerSnapshot = () => true;
 
 export function BrandIntro() {
-  // alreadySeen: true on the server and on return visits; false on first visit.
+  // alreadySeen: true on the server and once already shown this tab session.
   const alreadySeen = useSyncExternalStore(
     subscribeNoop,
     getIntroFlagSnapshot,
@@ -52,7 +54,7 @@ export function BrandIntro() {
     // setState calls are inside a setTimeout callback — not at the top level
     // of a useEffect — so they satisfy react-hooks/set-state-in-effect.
     setTimeout(() => {
-      localStorage.setItem("wheewise_intro_seen", "1");
+      sessionStorage.setItem("wheewise_intro_seen", "1");
       document.body.style.overflow = "";
       setDismissed(true);
     }, 820);
