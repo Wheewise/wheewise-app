@@ -11,6 +11,17 @@ const inter = Inter({
   display: "swap",
 });
 
+// middleware.ts issues a fresh crypto.randomUUID() nonce on every request
+// for the CSP script-src. That only matches the <script> nonces actually
+// baked into the HTML if this HTML is rendered fresh per-request too — a
+// cached/statically-prerendered page keeps the nonce from whenever it was
+// generated, while the CSP header always advertises a new one, so every
+// script (including React's own hydration bundle) gets blocked as a CSP
+// violation. Forcing dynamic rendering here (cascades to every route under
+// this root layout) keeps the two in sync, at the cost of losing static
+// generation/edge-cache for pages that would otherwise qualify.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://wheewise.com"),
   title: {
