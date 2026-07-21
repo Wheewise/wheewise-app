@@ -240,7 +240,7 @@ export async function signupDealer(
     throw err;
   }
 
-  redirect("/dashboard");
+  redirect("/dashboard/onboarding");
 }
 
 const loginSchema = z.object({
