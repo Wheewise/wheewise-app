@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ListingCard } from "@/components/storefront/ListingCard";
-import { Logo } from "@/components/brand/Logo";
-
+import { auth } from "@/lib/auth";
 import { searchListings } from "@/lib/search";
+import { VehicleCard } from "@/components/listings/VehicleCard";
+import { Logo } from "@/components/brand/Logo";
 
 export const metadata: Metadata = {
   title: "Browse pre-owned cars and bikes",
@@ -13,25 +13,29 @@ export const metadata: Metadata = {
 
 type Search = Promise<{
   type?: string;
-  fuel?: string;
-  city?: string;
   q?: string;
-  minPrice?: string;
-  maxPrice?: string;
-  minYear?: string;
   page?: string;
 }>;
 
 const PAGE_SIZE = 24;
 
-const FUEL_OPTIONS = ["PETROL", "DIESEL", "CNG", "ELECTRIC", "HYBRID"] as const;
+// The schema's VehicleType enum only has CAR/BIKE today. Scooters/Autos/
+// Commercial are shown per the requested design but disabled — there's no
+// data to filter to yet, so making them clickable would silently 0-result.
+const FILTER_CHIPS = [
+  { label: "All", type: undefined, enabled: true },
+  { label: "Cars", type: "CAR", enabled: true },
+  { label: "Bikes", type: "BIKE", enabled: true },
+  { label: "Scooters", type: "SCOOTER", enabled: false },
+  { label: "Autos", type: "AUTO", enabled: false },
+  { label: "Commercial", type: "COMMERCIAL", enabled: false },
+] as const;
 
 export default async function BrowsePage({ searchParams }: { searchParams: Search }) {
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);
-
-  const minPrice = sp.minPrice ? Number(sp.minPrice) : undefined;
-  const maxPrice = sp.maxPrice ? Number(sp.maxPrice) : undefined;
+  const session = await auth();
+  const isLoggedIn = Boolean(session?.user?.id);
 
   type SearchResult = Awaited<ReturnType<typeof searchListings>>;
   const emptyResult: SearchResult = {
@@ -39,21 +43,9 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
     meta: { total: 0, page, limit: PAGE_SIZE, totalPages: 0 },
   };
 
-  // Catch DB connection errors (e.g. E2E environments without a real database)
-  // so the page renders an empty state (HTTP 200) instead of propagating a 500.
   const result = await searchListings({
     q: sp.q,
     vehicleType: sp.type === "CAR" || sp.type === "BIKE" ? sp.type : undefined,
-    make: undefined,
-    model: undefined,
-    city: sp.city,
-    minPrice,
-    maxPrice,
-    fuelType:
-      sp.fuel && (FUEL_OPTIONS as readonly string[]).includes(sp.fuel)
-        ? sp.fuel
-        : undefined,
-    transmission: undefined,
     page,
     limit: PAGE_SIZE,
   }).catch((err: unknown) => {
@@ -64,21 +56,20 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   const listings = result.data;
   type BrowseListing = (typeof listings)[number];
   const total = result.meta.total;
-
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
   const qs = new URLSearchParams();
-  for (const [k, v] of Object.entries(sp)) {
-    if (v && k !== "page") qs.set(k, String(v));
-  }
+  if (sp.q) qs.set("q", sp.q);
+  if (sp.type) qs.set("type", sp.type);
 
   return (
-    <div className="bg-surface-muted min-h-screen">
-      <header className="border-border-default bg-background border-b">
+    <div className="min-h-screen bg-black">
+      <header className="border-b border-zinc-800 bg-zinc-950">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Logo variant="wordmark" size={26} href="/" />
           <Link
             href="/signup/dealer"
-            className="bg-brand-red hover:bg-brand-red-dark rounded-md px-3 py-1.5 text-sm font-semibold text-white"
+            className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
           >
             Sell on Wheewise
           </Link>
@@ -86,121 +77,76 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
       </header>
 
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Browse {total} vehicle{total === 1 ? "" : "s"}
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            From verified dealers across India.
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          Browse {total} vehicle{total === 1 ? "" : "s"}
+        </h1>
+        <p className="mt-1 text-sm text-zinc-500">From verified dealers across India.</p>
 
-        <form
-          method="get"
-          className="border-border-default bg-background mt-6 grid gap-3 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          <Field label="Search">
-            <input
-              name="q"
-              defaultValue={sp.q ?? ""}
-              placeholder="Make or model"
-              className={inputClass}
-            />
-          </Field>
-          <Field label="City">
-            <input
-              name="city"
-              defaultValue={sp.city ?? ""}
-              placeholder="Indore, Pune…"
-              className={inputClass}
-            />
-          </Field>
-          <Field label="Type">
-            <select name="type" defaultValue={sp.type ?? ""} className={inputClass}>
-              <option value="">All</option>
-              <option value="CAR">Cars</option>
-              <option value="BIKE">Bikes</option>
-            </select>
-          </Field>
-          <Field label="Fuel">
-            <select name="fuel" defaultValue={sp.fuel ?? ""} className={inputClass}>
-              <option value="">All</option>
-              {FUEL_OPTIONS.map((f) => (
-                <option key={f} value={f}>
-                  {f[0] + f.slice(1).toLowerCase()}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Min price (₹)">
-            <input
-              name="minPrice"
-              type="number"
-              min={0}
-              defaultValue={sp.minPrice ?? ""}
-              className={inputClass}
-            />
-          </Field>
-          <Field label="Max price (₹)">
-            <input
-              name="maxPrice"
-              type="number"
-              min={0}
-              defaultValue={sp.maxPrice ?? ""}
-              className={inputClass}
-            />
-          </Field>
-          <Field label="Min year">
-            <input
-              name="minYear"
-              type="number"
-              min={1980}
-              max={new Date().getFullYear() + 1}
-              defaultValue={sp.minYear ?? ""}
-              className={inputClass}
-            />
-          </Field>
-          <div className="flex items-end gap-2">
-            <button
-              type="submit"
-              className="bg-brand-red hover:bg-brand-red-dark flex-1 rounded-md px-4 py-2 text-sm font-semibold text-white"
-            >
-              Apply filters
-            </button>
-            <Link
-              href="/browse"
-              className="border-border-default hover:bg-surface-muted rounded-md border px-3 py-2 text-sm"
-            >
-              Reset
-            </Link>
-          </div>
+        <form method="get" className="mt-6">
+          {sp.type ? <input type="hidden" name="type" value={sp.type} /> : null}
+          <input
+            name="q"
+            defaultValue={sp.q ?? ""}
+            placeholder="Search by make, model or location"
+            className="block w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-red-600/50 focus:ring-2 focus:ring-red-600/20"
+          />
         </form>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {FILTER_CHIPS.map((chip) => {
+            const active = (sp.type ?? undefined) === chip.type;
+            if (!chip.enabled) {
+              return (
+                <span
+                  key={chip.label}
+                  title="Coming soon"
+                  className="cursor-not-allowed rounded-full border border-zinc-800 px-4 py-1.5 text-sm text-zinc-600"
+                >
+                  {chip.label}
+                </span>
+              );
+            }
+            const params = new URLSearchParams();
+            if (sp.q) params.set("q", sp.q);
+            if (chip.type) params.set("type", chip.type);
+            return (
+              <Link
+                key={chip.label}
+                href={`/browse${params.toString() ? `?${params.toString()}` : ""}`}
+                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+                  active
+                    ? "border-red-600 bg-red-600/10 text-red-500"
+                    : "border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-white"
+                }`}
+              >
+                {chip.label}
+              </Link>
+            );
+          })}
+        </div>
 
         <section className="py-8">
           {listings.length === 0 ? (
-            <div className="border-border-default bg-background rounded-lg border border-dashed p-12 text-center text-sm text-zinc-500">
-              No vehicles match your filters. Try widening your search.
+            <div className="py-20 text-center">
+              <p className="text-lg text-zinc-400">No vehicles listed yet.</p>
+              <p className="mt-2 text-sm text-zinc-500">Check back soon!</p>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {listings.map((l: BrowseListing) => (
-                <ListingCard
+                <VehicleCard
                   key={l.id}
-                  listing={{
-                    id: l.id,
-                    year: l.year,
-                    make: l.make,
-                    model: l.model,
-                    fuelType: l.fuelType,
-                    transmission: l.transmission,
-                    odometerKm: l.odometerKm,
-                    askingPrice: Number(l.askingPrice),
-                    city: l.city,
-                    status: l.status,
-                    coverUrl: l.photos[0]?.url,
-                    isBoosted: l.isBoosted,
-                    inspectionScore: l.inspections[0]?.overallScore ?? null,
-                  }}
+                  id={l.id}
+                  make={l.make}
+                  model={l.model}
+                  year={l.year}
+                  price={Number(l.askingPrice)}
+                  fuelType={l.fuelType}
+                  odometer={l.odometerKm}
+                  primaryPhoto={l.photos[0]?.url}
+                  dealerName={l.dealer.businessName}
+                  city={l.city}
+                  isLoggedIn={isLoggedIn}
                 />
               ))}
             </div>
@@ -223,20 +169,6 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   );
 }
 
-const inputClass =
-  "block w-full rounded-md border border-border-default bg-background px-3 py-2 text-sm";
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="block text-xs font-medium tracking-wide text-zinc-500 uppercase">
-        {label}
-      </span>
-      <span className="mt-1 block">{children}</span>
-    </label>
-  );
-}
-
 function PageLink({
   qs,
   page,
@@ -251,7 +183,7 @@ function PageLink({
   return (
     <Link
       href={`/browse?${params.toString()}`}
-      className="border-border-default bg-background hover:bg-surface-muted rounded-md border px-3 py-1.5"
+      className="rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-zinc-300 hover:bg-zinc-800"
     >
       {label}
     </Link>

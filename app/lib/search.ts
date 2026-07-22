@@ -83,7 +83,7 @@ export async function searchListings(filters: SearchFilters) {
       take: limit,
       include: {
         photos: { take: 1, orderBy: { sortOrder: "asc" } },
-        dealer: { select: { businessName: true } },
+        dealer: { select: { businessName: true, store: { select: { slug: true } } } },
         inspections: {
           where: { status: "COMPLETED" },
           select: { overallScore: true },

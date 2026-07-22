@@ -6,11 +6,12 @@ import { prisma } from "@/lib/db";
 import { formatINR, formatNumber } from "@/lib/format";
 import { whatsappLink } from "@/lib/whatsapp";
 import { appUrl, jsonLdScriptContent } from "@/lib/json-ld";
-import { EnquiryForm } from "./EnquiryForm";
 import { PhotoViewer } from "./PhotoViewer";
 import { EmiCalculator } from "@/components/vehicle/EmiCalculator";
 import { SaveButton } from "@/components/vehicle/SaveButton";
 import { CompareButton } from "@/components/vehicle/CompareButton";
+import { ShareButton } from "@/components/vehicle/ShareButton";
+import { EnquireGate } from "@/components/vehicle/EnquireGate";
 import { LoanApplyForm } from "@/components/vehicle/LoanApplyForm";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { ViewCounter } from "./ViewCounter";
@@ -191,6 +192,7 @@ export default async function VehiclePage({ params }: { params: Params }) {
               <div className="mt-4 flex items-center justify-between border-t pt-4">
                 <SaveButton listingId={listing.id} />
                 <CompareButton listingId={listing.id} />
+                <ShareButton title={vehicle} url={appUrl(`/vehicle/${listing.id}`)} />
               </div>
             </div>
 
@@ -200,7 +202,11 @@ export default async function VehiclePage({ params }: { params: Params }) {
                 We&apos;ll forward your details to the dealer.
               </p>
               <div className="mt-3">
-                <EnquiryForm listingId={listing.id} defaults={buyerDefaults} />
+                <EnquireGate
+                  listingId={listing.id}
+                  isLoggedIn={Boolean(session?.user?.id)}
+                  defaults={buyerDefaults}
+                />
               </div>
             </div>
 

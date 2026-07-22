@@ -6,7 +6,11 @@ export function PhotoGallery({ photos }: { photos: string[] }) {
   const [active, setActive] = useState(0);
   if (photos.length === 0) {
     return (
-      <div className="border-border-default bg-surface-muted aspect-[4/3] w-full rounded-lg border" />
+      <div className="border-border-default aspect-[4/3] w-full overflow-hidden rounded-lg border">
+        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+          <span className="text-6xl text-zinc-600">🚗</span>
+        </div>
+      </div>
     );
   }
   return (
