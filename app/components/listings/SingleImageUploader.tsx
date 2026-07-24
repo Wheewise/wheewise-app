@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { uploadPhoto } from "@/lib/uploads";
 
 export function SingleImageUploader({
   name,
@@ -19,31 +20,8 @@ export function SingleImageUploader({
     setBusy(true);
     setError(null);
     try {
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const res = await fetch("/api/uploads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contentType: file.type,
-          size: file.size,
-          ext,
-        }),
-      });
-      if (!res.ok) {
-        const { error: msg } = await res.json().catch(() => ({}));
-        throw new Error(msg || "Upload failed");
-      }
-      const { uploadUrl, publicUrl } = (await res.json()) as {
-        uploadUrl: string;
-        publicUrl: string;
-      };
-      const put = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      if (!put.ok) throw new Error("Upload failed");
-      setUrl(publicUrl);
+      const uploadedUrl = await uploadPhoto(file, file.name);
+      setUrl(uploadedUrl);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
     } finally {

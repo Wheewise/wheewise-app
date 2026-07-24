@@ -60,3 +60,4 @@ next-env.d.ts
 *.docx
 *.pdf
 *.zip
+.env*
