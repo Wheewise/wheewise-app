@@ -27,6 +27,7 @@ function parseFromForm(formData: FormData) {
     .filter(Boolean) as { url: string; angle: number }[];
 
   const transmissionRaw = formData.get("transmission");
+  const conditionRaw = formData.get("condition");
   return {
     parsed: listingSchema.safeParse({
       vehicleType: formData.get("vehicleType"),
@@ -37,6 +38,8 @@ function parseFromForm(formData: FormData) {
       transmission: transmissionRaw ? transmissionRaw : undefined,
       odometerKm: formData.get("odometerKm"),
       askingPrice: formData.get("askingPrice"),
+      condition: conditionRaw ? conditionRaw : undefined,
+      testDriveAvailable: formData.get("testDriveAvailable") ? "true" : undefined,
       description: formData.get("description"),
       city: formData.get("city"),
       photoUrls,
@@ -75,24 +78,36 @@ export async function createListing(
   // Sequential creates rather than one nested Listing->Photos/Photos360
   // write: a nested create needs an interactive transaction, which Neon's
   // HTTP-mode adapter (used in every environment now — see lib/db.ts) can't
-  // provide. Each call below is one independent INSERT.
-  const listing = await prisma.listing.create({
-    data: {
-      ...data,
-      description: finalDescription,
-      dealerId: dealer.id,
-    },
-  });
+  // provide. `createMany` also goes through that same transaction machinery
+  // and fails the same way, so each photo is inserted with its own `create`.
+  let listing;
+  try {
+    listing = await prisma.listing.create({
+      data: {
+        ...data,
+        description: finalDescription,
+        dealerId: dealer.id,
+      },
+    });
 
-  if (photoUrls.length > 0) {
-    await prisma.listingPhoto.createMany({
-      data: photoUrls.map((url, i) => ({ listingId: listing.id, url, sortOrder: i })),
-    });
-  }
-  if (photo360.length > 0) {
-    await prisma.listing360Photo.createMany({
-      data: photo360.map((p) => ({ listingId: listing.id, url: p.url, angle: p.angle })),
-    });
+    for (const [i, url] of photoUrls.entries()) {
+      await prisma.listingPhoto.create({ data: { listingId: listing.id, url, sortOrder: i } });
+    }
+    for (const p of photo360) {
+      await prisma.listing360Photo.create({
+        data: { listingId: listing.id, url: p.url, angle: p.angle },
+      });
+    }
+  } catch (error) {
+    console.error("[createListing] failed:", error);
+    if (listing) {
+      await prisma.listing.delete({ where: { id: listing.id } }).catch(() => {});
+    }
+    return {
+      ok: false,
+      errors: {},
+      formError: "Could not save listing. Please try again.",
+    };
   }
 
   revalidatePath("/dashboard");
@@ -178,9 +193,9 @@ export async function updateListing(
   if (toDelete.length > 0) {
     await prisma.listingPhoto.deleteMany({ where: { id: { in: toDelete } } });
   }
-  if (toAdd.length > 0) {
-    await prisma.listingPhoto.createMany({
-      data: toAdd.map((p) => ({ listingId, url: p.url, sortOrder: p.sortOrder })),
+  for (const p of toAdd) {
+    await prisma.listingPhoto.create({
+      data: { listingId, url: p.url, sortOrder: p.sortOrder },
     });
   }
   for (const [index, url] of photoUrls.entries()) {
@@ -191,10 +206,8 @@ export async function updateListing(
   if (toDelete360.length > 0) {
     await prisma.listing360Photo.deleteMany({ where: { id: { in: toDelete360 } } });
   }
-  if (toAdd360.length > 0) {
-    await prisma.listing360Photo.createMany({
-      data: toAdd360.map((p) => ({ listingId, url: p.url, angle: p.angle })),
-    });
+  for (const p of toAdd360) {
+    await prisma.listing360Photo.create({ data: { listingId, url: p.url, angle: p.angle } });
   }
 
   // Log orphaned photo count for future cleanup job

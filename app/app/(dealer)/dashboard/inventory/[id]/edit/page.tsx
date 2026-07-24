@@ -9,10 +9,13 @@ import { BoostButton } from "@/components/listings/BoostButton";
 
 export default async function EditListingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ created?: string }>;
 }) {
   const { id } = await params;
+  const { created } = await searchParams;
   const { dealer } = await requireDealer();
 
   const listing = await prisma.listing.findFirst({
@@ -25,6 +28,11 @@ export default async function EditListingPage({
 
   return (
     <div className="space-y-6">
+      {created === "1" ? (
+        <p className="rounded-md bg-green-50 px-3 py-2 text-sm font-medium text-green-700">
+          Vehicle listed successfully!
+        </p>
+      ) : null}
       <div className="flex items-center justify-between">
         <div>
           <Link
