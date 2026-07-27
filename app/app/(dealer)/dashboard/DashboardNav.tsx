@@ -18,6 +18,7 @@ const items = [
 export function DashboardNav() {
   const pathname = usePathname();
   const [chatUnread, setChatUnread] = useState(0);
+  const [leadsUnread, setLeadsUnread] = useState(0);
 
   useEffect(() => {
     const check = () => {
@@ -27,11 +28,17 @@ export function DashboardNav() {
           if (data) setChatUnread(data.reduce((s, c) => s + c.unread, 0));
         })
         .catch(() => {});
+      fetch("/api/dealer/leads/unread-count")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: { count: number } | null) => {
+          if (data) setLeadsUnread(data.count);
+        })
+        .catch(() => {});
     };
     check();
     const interval = setInterval(check, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [pathname]);
 
   return (
     <ul className="space-y-1">
@@ -43,13 +50,18 @@ export function DashboardNav() {
           <li key={item.href}>
             <Link
               href={item.href}
-              className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 active
                   ? "bg-brand-red/10 text-brand-red"
                   : "text-foreground hover:bg-surface-muted"
               }`}
             >
-              {item.label}
+              <span>{item.label}</span>
+              {item.href === "/dashboard/leads" && leadsUnread > 0 ? (
+                <span className="bg-brand-red inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
+                  {leadsUnread}
+                </span>
+              ) : null}
             </Link>
           </li>
         );

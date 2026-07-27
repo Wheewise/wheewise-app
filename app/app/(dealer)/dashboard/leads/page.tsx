@@ -1,20 +1,17 @@
 import Link from "next/link";
-import { prisma } from "@/lib/db";
 import { requireDealer } from "@/lib/dealer";
+import { getEnquiriesForDealer } from "@/lib/actions/enquiries";
 import { LeadActions } from "./LeadActions";
+
+const STATUS_BADGE: Record<string, { label: string; className: string }> = {
+  OPEN: { label: "New", className: "bg-brand-red text-white" },
+  REPLIED: { label: "Replied", className: "bg-emerald-100 text-emerald-800" },
+  CLOSED: { label: "Closed", className: "bg-zinc-200 text-zinc-600" },
+};
 
 export default async function LeadsPage() {
   const { dealer } = await requireDealer();
-
-  const leads = await prisma.enquiry.findMany({
-    where: { dealerId: dealer.id },
-    orderBy: [{ isRead: "asc" }, { priority: "desc" }, { createdAt: "desc" }],
-    include: {
-      listing: {
-        select: { id: true, make: true, model: true, year: true },
-      },
-    },
-  });
+  const leads = await getEnquiriesForDealer();
 
   return (
     <div className="space-y-6">
@@ -42,6 +39,8 @@ export default async function LeadsPage() {
               const waMsg = encodeURIComponent(
                 `Hi ${lead.buyerName}, this is ${dealer.businessName} regarding the ${vehicle}.`,
               );
+              const badge = STATUS_BADGE[lead.status] ?? STATUS_BADGE.OPEN;
+              const photo = lead.listing.photos[0]?.url;
               return (
                 <li
                   key={lead.id}
@@ -49,44 +48,58 @@ export default async function LeadsPage() {
                     lead.isRead ? "" : "bg-brand-red/5"
                   }`}
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium">{lead.buyerName}</span>
-                      {!lead.isRead ? (
-                        <span className="bg-brand-red rounded-full px-2 py-0.5 text-[10px] font-semibold text-white uppercase">
-                          New
+                  <div className="flex min-w-0 flex-1 gap-3">
+                    {photo ? (
+                      <img
+                        src={photo}
+                        alt={vehicle}
+                        className="h-14 w-20 shrink-0 rounded-md object-cover"
+                      />
+                    ) : (
+                      <div className="bg-surface-muted h-14 w-20 shrink-0 rounded-md" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{lead.buyerName}</span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${badge.className}`}
+                        >
+                          {badge.label}
                         </span>
+                        {lead.priority >= 50 ? (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 uppercase">
+                            Hot
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-1 text-sm text-zinc-600">
+                        <Link
+                          href={`/dashboard/inventory/${lead.listing.id}/edit`}
+                          className="font-medium hover:underline"
+                        >
+                          {vehicle}
+                        </Link>
+                        {" · "}
+                        {lead.buyerPhone}
+                        {lead.buyerEmail ? ` · ${lead.buyerEmail}` : ""}
+                      </div>
+                      {lead.message ? (
+                        <p className="text-foreground mt-2 text-sm">“{lead.message}”</p>
                       ) : null}
-                      {lead.priority >= 50 ? (
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 uppercase">
-                          Hot
-                        </span>
-                      ) : null}
-                      {lead.isContacted ? (
-                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 uppercase">
-                          Contacted
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="mt-1 text-sm text-zinc-600">
-                      <Link
-                        href={`/dashboard/inventory/${lead.listing.id}/edit`}
-                        className="font-medium hover:underline"
-                      >
-                        {vehicle}
-                      </Link>
-                      {" · "}
-                      {lead.buyerPhone}
-                      {lead.buyerEmail ? ` · ${lead.buyerEmail}` : ""}
-                    </div>
-                    {lead.message ? (
-                      <p className="text-foreground mt-2 text-sm">“{lead.message}”</p>
-                    ) : null}
-                    <div className="mt-2 text-xs text-zinc-500">
-                      {lead.createdAt.toLocaleString()}
+                      <div className="mt-2 text-xs text-zinc-500">
+                        {lead.createdAt.toLocaleString()}
+                      </div>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
+                    {lead.buyerId ? (
+                      <Link
+                        href={`/dashboard/leads/${lead.id}`}
+                        className="bg-brand-red hover:bg-brand-red-dark rounded-md px-3 py-1.5 text-xs font-semibold text-white"
+                      >
+                        View conversation
+                      </Link>
+                    ) : null}
                     <a
                       href={`https://wa.me/${waNumber}?text=${waMsg}`}
                       target="_blank"

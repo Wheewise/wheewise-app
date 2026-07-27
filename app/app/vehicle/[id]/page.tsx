@@ -11,7 +11,7 @@ import { EmiCalculator } from "@/components/vehicle/EmiCalculator";
 import { SaveButton } from "@/components/vehicle/SaveButton";
 import { CompareButton } from "@/components/vehicle/CompareButton";
 import { ShareButton } from "@/components/vehicle/ShareButton";
-import { EnquireGate } from "@/components/vehicle/EnquireGate";
+import { EnquireButton } from "@/components/vehicle/EnquireButton";
 import { LoanApplyForm } from "@/components/vehicle/LoanApplyForm";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { ViewCounter } from "./ViewCounter";
@@ -57,12 +57,6 @@ export default async function VehiclePage({ params }: { params: Params }) {
   if (!listing) notFound();
 
   const session = await auth();
-  const buyerDefaults = session?.user
-    ? {
-        name: session.user.name ?? "",
-        email: session.user.email ?? "",
-      }
-    : undefined;
 
   const dealer = listing.dealer;
   const vehicle = `${listing.year} ${listing.make} ${listing.model}`;
@@ -156,6 +150,12 @@ export default async function VehiclePage({ params }: { params: Params }) {
                   {listing.description}
                 </p>
               </div>
+
+              <div className="border-border-default mt-6 border-t pt-4 text-sm text-zinc-500">
+                {listing.enquiryCount}{" "}
+                {listing.enquiryCount === 1 ? "person has" : "people have"} enquired about
+                this vehicle
+              </div>
             </div>
           </div>
 
@@ -197,15 +197,16 @@ export default async function VehiclePage({ params }: { params: Params }) {
             </div>
 
             <div className="border-border-default bg-background rounded-lg border p-5">
-              <h3 className="text-sm font-semibold">Send an enquiry</h3>
+              <h3 className="text-sm font-semibold">Enquire about this vehicle</h3>
               <p className="mt-1 text-xs text-zinc-500">
-                We&apos;ll forward your details to the dealer.
+                Message the dealer directly and track their reply.
               </p>
               <div className="mt-3">
-                <EnquireGate
+                <EnquireButton
                   listingId={listing.id}
+                  vehicle={vehicle}
+                  photoUrl={listing.photos[0]?.url}
                   isLoggedIn={Boolean(session?.user?.id)}
-                  defaults={buyerDefaults}
                 />
               </div>
             </div>

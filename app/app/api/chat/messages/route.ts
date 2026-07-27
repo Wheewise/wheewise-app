@@ -56,10 +56,15 @@ export async function GET(req: Request) {
     .map((m: Message) => m.id);
 
   if (unreadIds.length > 0) {
-    await prisma.message.updateMany({
-      where: { id: { in: unreadIds } },
-      data: { readAt: new Date() },
-    });
+    // updateMany runs as a multi-statement transaction, which the Cloudflare
+    // Workers Neon HTTP adapter can't do (see lib/db.ts) — update each row
+    // individually instead.
+    const readAt = new Date();
+    await Promise.all(
+      unreadIds.map((id: string) =>
+        prisma.message.update({ where: { id }, data: { readAt } }),
+      ),
+    );
   }
 
   return NextResponse.json(messages);

@@ -223,10 +223,18 @@ model Enquiry {
   priority    Int           @default(0)
   isRead      Boolean       @default(false)
   isContacted Boolean       @default(false)
+  status      EnquiryStatus @default(OPEN)
   createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
 
   @@index([dealerId, isRead, priority, createdAt])
   @@index([listingId, createdAt])
+}
+
+enum EnquiryStatus {
+  OPEN
+  REPLIED
+  CLOSED
 }
 
 // =============================================================

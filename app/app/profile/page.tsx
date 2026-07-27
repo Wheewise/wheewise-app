@@ -66,7 +66,7 @@ export default async function ProfilePage() {
             My Wishlist →
           </Link>
           <Link
-            href="/enquiries"
+            href="/my-enquiries"
             className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm font-medium text-white hover:border-zinc-700"
           >
             My Enquiries →
