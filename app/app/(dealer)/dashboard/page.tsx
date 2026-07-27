@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireDealer } from "@/lib/dealer";
 import { Button } from "@/components/ui/Field";
+import { appUrl } from "@/lib/json-ld";
+import { CopyStoreLink } from "@/components/dealer/CopyStoreLink";
 
 export default async function DashboardPage() {
   const { dealer } = await requireDealer();
@@ -37,9 +39,12 @@ export default async function DashboardPage() {
       : `${sub.plan} · ${sub.status}`
     : "No subscription";
 
+  const storeUrl = appUrl(`/s/${dealer.store?.slug ?? ""}`);
+  const waShareLink = `https://wa.me/?text=${encodeURIComponent(`Check out my showroom: ${storeUrl}`)}`;
+
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
             Welcome back, {dealer.businessName}
@@ -53,6 +58,17 @@ export default async function DashboardPage() {
               /s/{dealer.store?.slug}
             </Link>
           </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <CopyStoreLink url={storeUrl} />
+            <a
+              href={waShareLink}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
+            >
+              Share on WhatsApp
+            </a>
+          </div>
         </div>
         <Link href="/dashboard/inventory/new">
           <Button>Add vehicle</Button>
@@ -111,7 +127,7 @@ function Kpi({
   small?: boolean;
 }) {
   return (
-    <div className="border-border-default bg-background rounded-lg border p-4">
+    <div className="border-border-default bg-background rounded-lg border border-t-2 border-t-red-600/30 p-4">
       <div className="text-xs font-medium tracking-wide text-zinc-500 uppercase">
         {label}
       </div>
