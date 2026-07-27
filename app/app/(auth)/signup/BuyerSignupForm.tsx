@@ -19,6 +19,9 @@ export function BuyerSignupForm() {
       <Field label="Email" name="email" errors={errors.email}>
         <Input id="email" name="email" type="email" autoComplete="email" required />
       </Field>
+      <Field label="Phone number" name="phone" errors={errors.phone}>
+        <Input id="phone" name="phone" type="tel" autoComplete="tel" required />
+      </Field>
       <Field
         label="Password"
         name="password"
@@ -33,6 +36,26 @@ export function BuyerSignupForm() {
           required
           minLength={8}
         />
+      </Field>
+      <Field
+        label="Confirm password"
+        name="confirmPassword"
+        errors={errors.confirmPassword}
+      >
+        <Input
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+        />
+      </Field>
+      <Field label="District" name="district" errors={errors.district}>
+        <Input id="district" name="district" autoComplete="address-level2" required />
+      </Field>
+      <Field label="State" name="state" errors={errors.state}>
+        <Input id="state" name="state" autoComplete="address-level1" required />
       </Field>
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Creating account…" : "Create account"}

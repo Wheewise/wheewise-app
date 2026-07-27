@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { searchListings } from "@/lib/search";
 import { VehicleCard } from "@/components/listings/VehicleCard";
 import { Logo } from "@/components/brand/Logo";
@@ -15,6 +16,7 @@ type Search = Promise<{
   type?: string;
   q?: string;
   page?: string;
+  welcome?: string;
 }>;
 
 const PAGE_SIZE = 24;
@@ -36,6 +38,16 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   const page = Math.max(1, Number(sp.page) || 1);
   const session = await auth();
   const isLoggedIn = Boolean(session?.user?.id);
+  const isBuyer = isLoggedIn && session?.user?.role === "BUYER";
+  const showWelcomeBanner = sp.welcome === "1";
+
+  const buyerStats =
+    isBuyer && session?.user?.id
+      ? await Promise.all([
+          prisma.savedListing.count({ where: { userId: session.user.id } }),
+          prisma.enquiry.count({ where: { buyerId: session.user.id } }),
+        ]).then(([savedCount, enquiryCount]) => ({ savedCount, enquiryCount }))
+      : null;
 
   type SearchResult = Awaited<ReturnType<typeof searchListings>>;
   const emptyResult: SearchResult = {
@@ -67,16 +79,59 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
       <header className="border-b border-zinc-800 bg-zinc-950">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Logo variant="wordmark" size={26} href="/" />
-          <Link
-            href="/signup/dealer"
-            className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
-          >
-            Sell on Wheewise
-          </Link>
+          {isBuyer ? (
+            <Link
+              href="/profile"
+              className="text-sm font-medium text-zinc-300 hover:text-white"
+            >
+              My Profile
+            </Link>
+          ) : (
+            <Link
+              href="/signup/dealer"
+              className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              Sell on Wheewise
+            </Link>
+          )}
         </div>
       </header>
 
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+        {showWelcomeBanner ? (
+          <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-600/20 bg-red-600/10 p-4">
+            <span className="text-2xl">🎉</span>
+            <div>
+              <p className="font-semibold text-white">Welcome to Wheewise!</p>
+              <p className="text-sm text-zinc-400">
+                Start browsing pre-owned vehicles.
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        {isBuyer ? (
+          <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+            <p className="font-semibold text-white">
+              Welcome back, {session?.user?.name ?? "there"}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-4 text-sm text-zinc-400">
+              <span>
+                <span className="font-semibold text-white">
+                  {buyerStats?.savedCount ?? 0}
+                </span>{" "}
+                vehicles saved to wishlist
+              </span>
+              <span>
+                <span className="font-semibold text-white">
+                  {buyerStats?.enquiryCount ?? 0}
+                </span>{" "}
+                enquiries sent
+              </span>
+            </div>
+          </div>
+        ) : null}
+
         <h1 className="text-2xl font-bold tracking-tight text-white">
           Browse {total} vehicle{total === 1 ? "" : "s"}
         </h1>

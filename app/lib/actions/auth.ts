@@ -10,19 +10,37 @@ import { signIn } from "@/lib/auth";
 
 import { passwordRule } from "@/lib/password";
 
-const buyerSignupSchema = z.object({
+const baseSignupSchema = z.object({
   name: z.string().min(2, "Name is too short"),
   email: z.string().email("Enter a valid email"),
   password: passwordRule,
 });
 
-const dealerSignupSchema = buyerSignupSchema.extend({
+const phoneField = z
+  .string()
+  .min(10, "Phone must be at least 10 digits")
+  .regex(/^[+\d\s-]+$/, "Use digits, spaces, + or -");
+
+const buyerSignupSchema = baseSignupSchema
+  .extend({
+    phone: phoneField,
+    confirmPassword: z.string().min(1, "Confirm your password"),
+    district: z.string().min(2, "District is required"),
+    state: z.string().min(2, "State is required"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/[^0-9]/g, "").slice(-10);
+}
+
+const dealerSignupSchema = baseSignupSchema.extend({
   businessName: z.string().min(2, "Business name is required"),
   city: z.string().min(2, "City is required"),
-  phone: z
-    .string()
-    .min(10, "Phone must be at least 10 digits")
-    .regex(/^[+\d\s-]+$/, "Use digits, spaces, + or -"),
+  phone: phoneField,
   whatsapp: z.string().optional(),
 });
 
@@ -39,26 +57,38 @@ export async function signupBuyer(
   const parsed = buyerSignupSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
+    phone: formData.get("phone"),
     password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+    district: formData.get("district"),
+    state: formData.get("state"),
   });
   if (!parsed.success) {
     return { ok: false, errors: flattenErrors(parsed.error) };
   }
 
-  const existing = await prisma.user.findUnique({
-    where: { email: parsed.data.email },
-    select: { id: true },
+  const normalizedPhone = normalizePhone(parsed.data.phone);
+
+  const existing = await prisma.user.findFirst({
+    where: { OR: [{ email: parsed.data.email }, { phone: normalizedPhone }] },
+    select: { email: true, phone: true },
   });
-  if (existing) {
+  if (existing?.email === parsed.data.email) {
     return { ok: false, errors: { email: ["Email already in use"] } };
+  }
+  if (existing?.phone === normalizedPhone) {
+    return { ok: false, errors: { phone: ["Phone number already in use"] } };
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
   await prisma.user.create({
     data: {
       email: parsed.data.email,
+      phone: normalizedPhone,
       name: parsed.data.name,
       passwordHash,
+      district: parsed.data.district,
+      state: parsed.data.state,
       role: "BUYER",
     },
   });
@@ -69,7 +99,7 @@ export async function signupBuyer(
     redirect: false,
   });
 
-  redirect("/");
+  redirect("/browse?welcome=1");
 }
 
 function slugify(input: string): string {
@@ -276,5 +306,5 @@ export async function loginAction(
     where: { email: parsed.data.email },
     select: { role: true },
   });
-  redirect(user?.role === "DEALER" ? "/dashboard" : "/");
+  redirect(user?.role === "DEALER" ? "/dashboard" : "/browse");
 }
