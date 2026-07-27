@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { searchListings } from "@/lib/search";
+import { searchListings, getDistinctCities, type SortOption } from "@/lib/search";
 import { VehicleCard } from "@/components/listings/VehicleCard";
 import { Logo } from "@/components/brand/Logo";
+import { BrowseControls } from "@/components/browse/BrowseControls";
 
 export const metadata: Metadata = {
   title: "Browse pre-owned cars and bikes",
@@ -13,25 +14,29 @@ export const metadata: Metadata = {
 };
 
 type Search = Promise<{
+  search?: string;
   type?: string;
-  q?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  yearMin?: string;
+  yearMax?: string;
+  fuel?: string;
+  condition?: string;
+  city?: string;
+  sort?: string;
   page?: string;
   welcome?: string;
 }>;
 
 const PAGE_SIZE = 24;
+const SORT_VALUES = new Set<string>(["newest", "price_asc", "price_desc", "year_desc"]);
+const EARLIEST_YEAR = 2000;
 
-// The schema's VehicleType enum only has CAR/BIKE today. Scooters/Autos/
-// Commercial are shown per the requested design but disabled — there's no
-// data to filter to yet, so making them clickable would silently 0-result.
-const FILTER_CHIPS = [
-  { label: "All", type: undefined, enabled: true },
-  { label: "Cars", type: "CAR", enabled: true },
-  { label: "Bikes", type: "BIKE", enabled: true },
-  { label: "Scooters", type: "SCOOTER", enabled: false },
-  { label: "Autos", type: "AUTO", enabled: false },
-  { label: "Commercial", type: "COMMERCIAL", enabled: false },
-] as const;
+function parseIntParam(value: string | undefined): number | undefined {
+  if (!value) return undefined;
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) ? n : undefined;
+}
 
 export default async function BrowsePage({ searchParams }: { searchParams: Search }) {
   const sp = await searchParams;
@@ -55,24 +60,54 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
     meta: { total: 0, page, limit: PAGE_SIZE, totalPages: 0 },
   };
 
-  const result = await searchListings({
-    q: sp.q,
-    vehicleType: sp.type === "CAR" || sp.type === "BIKE" ? sp.type : undefined,
-    page,
-    limit: PAGE_SIZE,
-  }).catch((err: unknown) => {
-    console.error("[browse] searchListings failed:", err);
-    return emptyResult;
-  });
+  const sort: SortOption = SORT_VALUES.has(sp.sort ?? "") ? (sp.sort as SortOption) : "newest";
+
+  const [result, cities] = await Promise.all([
+    searchListings({
+      q: sp.search,
+      vehicleType: sp.type === "CAR" || sp.type === "BIKE" ? sp.type : undefined,
+      minPrice: parseIntParam(sp.minPrice),
+      maxPrice: parseIntParam(sp.maxPrice),
+      yearMin: parseIntParam(sp.yearMin),
+      yearMax: parseIntParam(sp.yearMax),
+      fuelTypes: sp.fuel ? sp.fuel.split(",").filter(Boolean) : undefined,
+      conditions: sp.condition ? sp.condition.split(",").filter(Boolean) : undefined,
+      city: sp.city,
+      sort,
+      page,
+      limit: PAGE_SIZE,
+    }).catch((err: unknown) => {
+      console.error("[browse] searchListings failed:", err);
+      return emptyResult;
+    }),
+    getDistinctCities().catch((err: unknown) => {
+      console.error("[browse] getDistinctCities failed:", err);
+      return [] as string[];
+    }),
+  ]);
 
   const listings = result.data;
   type BrowseListing = (typeof listings)[number];
   const total = result.meta.total;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from(
+    { length: currentYear - EARLIEST_YEAR + 1 },
+    (_, i) => currentYear - i,
+  );
+
   const qs = new URLSearchParams();
-  if (sp.q) qs.set("q", sp.q);
+  if (sp.search) qs.set("search", sp.search);
   if (sp.type) qs.set("type", sp.type);
+  if (sp.minPrice) qs.set("minPrice", sp.minPrice);
+  if (sp.maxPrice) qs.set("maxPrice", sp.maxPrice);
+  if (sp.yearMin) qs.set("yearMin", sp.yearMin);
+  if (sp.yearMax) qs.set("yearMax", sp.yearMax);
+  if (sp.fuel) qs.set("fuel", sp.fuel);
+  if (sp.condition) qs.set("condition", sp.condition);
+  if (sp.city) qs.set("city", sp.city);
+  if (sp.sort) qs.set("sort", sp.sort);
 
   return (
     <div className="min-h-screen bg-black">
@@ -133,92 +168,53 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
         ) : null}
 
         <h1 className="text-2xl font-bold tracking-tight text-white">
-          Browse {total} vehicle{total === 1 ? "" : "s"}
+          Browse pre-owned vehicles
         </h1>
         <p className="mt-1 text-sm text-zinc-500">From verified dealers across India.</p>
 
-        <form method="get" className="mt-6">
-          {sp.type ? <input type="hidden" name="type" value={sp.type} /> : null}
-          <input
-            name="q"
-            defaultValue={sp.q ?? ""}
-            placeholder="Search by make, model or location"
-            className="block w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-red-600/50 focus:ring-2 focus:ring-red-600/20"
-          />
-        </form>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          {FILTER_CHIPS.map((chip) => {
-            const active = (sp.type ?? undefined) === chip.type;
-            if (!chip.enabled) {
-              return (
-                <span
-                  key={chip.label}
-                  title="Coming soon"
-                  className="cursor-not-allowed rounded-full border border-zinc-800 px-4 py-1.5 text-sm text-zinc-600"
-                >
-                  {chip.label}
-                </span>
-              );
-            }
-            const params = new URLSearchParams();
-            if (sp.q) params.set("q", sp.q);
-            if (chip.type) params.set("type", chip.type);
-            return (
-              <Link
-                key={chip.label}
-                href={`/browse${params.toString() ? `?${params.toString()}` : ""}`}
-                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                  active
-                    ? "border-red-600 bg-red-600/10 text-red-500"
-                    : "border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-white"
-                }`}
-              >
-                {chip.label}
-              </Link>
-            );
-          })}
-        </div>
-
-        <section className="py-8">
+        <BrowseControls cities={cities} yearOptions={yearOptions} total={total}>
           {listings.length === 0 ? (
             <div className="py-20 text-center">
-              <p className="text-lg text-zinc-400">No vehicles listed yet.</p>
-              <p className="mt-2 text-sm text-zinc-500">Check back soon!</p>
+              <p className="text-lg text-zinc-400">No vehicles found.</p>
+              <p className="mt-2 text-sm text-zinc-500">
+                Try a different search or adjust your filters.
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {listings.map((l: BrowseListing) => (
-                <VehicleCard
-                  key={l.id}
-                  id={l.id}
-                  make={l.make}
-                  model={l.model}
-                  year={l.year}
-                  price={Number(l.askingPrice)}
-                  fuelType={l.fuelType}
-                  odometer={l.odometerKm}
-                  primaryPhoto={l.photos[0]?.url}
-                  dealerName={l.dealer.businessName}
-                  city={l.city}
-                  isLoggedIn={isLoggedIn}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+            <>
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                {listings.map((l: BrowseListing) => (
+                  <VehicleCard
+                    key={l.id}
+                    id={l.id}
+                    make={l.make}
+                    model={l.model}
+                    year={l.year}
+                    price={Number(l.askingPrice)}
+                    fuelType={l.fuelType}
+                    odometer={l.odometerKm}
+                    primaryPhoto={l.photos[0]?.url}
+                    dealerName={l.dealer.businessName}
+                    city={l.city}
+                    isLoggedIn={isLoggedIn}
+                  />
+                ))}
+              </div>
 
-        {totalPages > 1 ? (
-          <div className="flex items-center justify-center gap-2 pb-10 text-sm">
-            {page > 1 ? <PageLink qs={qs} page={page - 1} label="← Previous" /> : null}
-            <span className="text-zinc-500">
-              Page {page} of {totalPages}
-            </span>
-            {page < totalPages ? (
-              <PageLink qs={qs} page={page + 1} label="Next →" />
-            ) : null}
-          </div>
-        ) : null}
+              {totalPages > 1 ? (
+                <div className="flex items-center justify-center gap-2 pt-8 text-sm">
+                  {page > 1 ? <PageLink qs={qs} page={page - 1} label="← Previous" /> : null}
+                  <span className="text-zinc-500">
+                    Page {page} of {totalPages}
+                  </span>
+                  {page < totalPages ? (
+                    <PageLink qs={qs} page={page + 1} label="Next →" />
+                  ) : null}
+                </div>
+              ) : null}
+            </>
+          )}
+        </BrowseControls>
       </div>
     </div>
   );
