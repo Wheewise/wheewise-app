@@ -51,7 +51,7 @@ export default async function EditListingPage({
         <ListingActions listingId={listing.id} status={listing.status} />
       </div>
 
-      <div className="border-border-default bg-background rounded-lg border p-4">
+      <div id="boost" className="border-border-default bg-background scroll-mt-6 rounded-lg border p-4">
         <BoostButton
           listingId={listing.id}
           isBoosted={listing.isBoosted}
@@ -71,11 +71,14 @@ export default async function EditListingPage({
             transmission: listing.transmission,
             odometerKm: listing.odometerKm,
             askingPrice: Number(listing.askingPrice),
+            condition: listing.condition,
+            testDriveAvailable: listing.testDriveAvailable,
             description: listing.description || undefined,
             city: listing.city,
             photoUrls: listing.photos.map((p) => p.url),
           }}
           submitLabel="Save changes"
+          lockIdentity
         />
       </div>
     </div>

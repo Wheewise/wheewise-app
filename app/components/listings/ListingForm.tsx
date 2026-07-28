@@ -5,7 +5,12 @@ import { Field, Input, Button } from "@/components/ui/Field";
 import { PhotoUploader } from "./PhotoUploader";
 import { Photo360Uploader } from "./Photo360Uploader";
 import { RtoLookup } from "./RtoLookup";
-import { FUEL_TYPES, TRANSMISSIONS, VEHICLE_TYPES } from "@/lib/validators/listing";
+import {
+  FUEL_TYPES,
+  TRANSMISSIONS,
+  VEHICLE_TYPES,
+  VEHICLE_CONDITIONS,
+} from "@/lib/validators/listing";
 import type { ListingActionState } from "@/lib/actions/listings";
 
 type Defaults = {
@@ -17,6 +22,8 @@ type Defaults = {
   transmission?: string | null;
   odometerKm?: number;
   askingPrice?: number;
+  condition?: string | null;
+  testDriveAvailable?: boolean;
   description?: string;
   city?: string;
   photoUrls?: string[];
@@ -26,10 +33,16 @@ export function ListingForm({
   action,
   defaults = {},
   submitLabel = "Save listing",
+  lockIdentity = false,
 }: {
   action: (state: ListingActionState, formData: FormData) => Promise<ListingActionState>;
   defaults?: Defaults;
   submitLabel?: string;
+  /** Edit mode: make/model/year were confirmed once from the RTO at creation
+   * time and can't be retyped here — re-typing them would let a listing
+   * quietly become a different vehicle while keeping its accumulated
+   * views/enquiries. Creation flows leave this false so they stay editable. */
+  lockIdentity?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<ListingActionState, FormData>(
     action,
@@ -95,7 +108,73 @@ export function ListingForm({
 
   return (
     <form action={formAction} className="space-y-6">
-      <RtoLookup onFetched={handleRtoFetched} />
+      {lockIdentity ? (
+        <>
+          <input type="hidden" name="make" value={make} />
+          <input type="hidden" name="model" value={model} />
+          <input type="hidden" name="year" value={year} />
+
+          <div>
+            <div className="text-xs font-medium tracking-wide text-zinc-500 uppercase">
+              Vehicle
+            </div>
+            <div className="border-border-default bg-surface-muted mt-1 grid grid-cols-3 gap-3 rounded-md border p-3 text-sm">
+              <div>
+                <div className="text-xs text-zinc-500">Make</div>
+                <div className="font-medium">{make}</div>
+              </div>
+              <div>
+                <div className="text-xs text-zinc-500">Model</div>
+                <div className="font-medium">{model}</div>
+              </div>
+              <div>
+                <div className="text-xs text-zinc-500">Year</div>
+                <div className="font-medium">{year}</div>
+              </div>
+            </div>
+            <p className="mt-1 text-xs text-zinc-500">
+              Confirmed from the RC when this listing was created — can&apos;t be changed here.
+            </p>
+          </div>
+        </>
+      ) : (
+        <>
+          <RtoLookup onFetched={handleRtoFetched} />
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Make" name="make" errors={errors.make}>
+              <Input
+                id="make"
+                name="make"
+                value={make}
+                onChange={(e) => setMake(e.target.value)}
+                required
+              />
+            </Field>
+            <Field label="Model" name="model" errors={errors.model}>
+              <Input
+                id="model"
+                name="model"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                required
+              />
+            </Field>
+            <Field label="Year" name="year" errors={errors.year}>
+              <Input
+                id="year"
+                name="year"
+                type="number"
+                min={1980}
+                max={new Date().getFullYear() + 1}
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                required
+              />
+            </Field>
+          </div>
+        </>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Vehicle type" name="vehicleType" errors={errors.vehicleType}>
@@ -114,39 +193,6 @@ export function ListingForm({
         </Field>
         <Field label="City" name="city" errors={errors.city}>
           <Input id="city" name="city" defaultValue={defaults.city} required />
-        </Field>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Make" name="make" errors={errors.make}>
-          <Input
-            id="make"
-            name="make"
-            value={make}
-            onChange={(e) => setMake(e.target.value)}
-            required
-          />
-        </Field>
-        <Field label="Model" name="model" errors={errors.model}>
-          <Input
-            id="model"
-            name="model"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            required
-          />
-        </Field>
-        <Field label="Year" name="year" errors={errors.year}>
-          <Input
-            id="year"
-            name="year"
-            type="number"
-            min={1980}
-            max={new Date().getFullYear() + 1}
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-            required
-          />
         </Field>
       </div>
 
@@ -193,16 +239,44 @@ export function ListingForm({
         </Field>
       </div>
 
-      <Field label="Asking price (₹)" name="askingPrice" errors={errors.askingPrice}>
-        <Input
-          id="askingPrice"
-          name="askingPrice"
-          type="number"
-          min={1000}
-          defaultValue={defaults.askingPrice}
-          required
-        />
-      </Field>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Field label="Asking price (₹)" name="askingPrice" errors={errors.askingPrice}>
+          <Input
+            id="askingPrice"
+            name="askingPrice"
+            type="number"
+            min={1000}
+            defaultValue={defaults.askingPrice}
+            required
+          />
+        </Field>
+        <Field label="Condition" name="condition" errors={errors.condition}>
+          <select
+            id="condition"
+            name="condition"
+            defaultValue={defaults.condition ?? "B"}
+            className={select}
+          >
+            {VEHICLE_CONDITIONS.map((c) => (
+              <option key={c} value={c}>
+                Grade {c}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <div className="flex items-end pb-2.5">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="testDriveAvailable"
+              value="true"
+              defaultChecked={defaults.testDriveAvailable ?? false}
+              className="border-border-default h-4 w-4 rounded"
+            />
+            Test drive available
+          </label>
+        </div>
+      </div>
 
       <Field label="Description" name="description" errors={errors.description}>
         <div className="space-y-2">
@@ -258,11 +332,6 @@ export function ListingForm({
       {state && "ok" in state && state.ok === false && state.formError ? (
         <p className="bg-brand-red/10 text-brand-red rounded-md px-3 py-2 text-sm">
           {state.formError}
-        </p>
-      ) : null}
-      {state && "ok" in state && state.ok === true ? (
-        <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          Saved.
         </p>
       ) : null}
 

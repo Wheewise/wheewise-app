@@ -222,27 +222,90 @@ export async function updateListing(
   revalidatePath(`/dashboard/inventory/${listingId}/edit`);
   revalidatePath(`/s/${dealer.store?.slug}/showcase`);
   revalidatePath(`/vehicle/${listingId}`);
-  return { ok: true };
+  redirect("/dashboard/inventory?updated=1");
 }
+
+export type ListingMutationResult = { ok: true } | { ok: false; error: string };
 
 export async function setListingStatus(
   listingId: string,
   status: "ACTIVE" | "SOLD" | "PAUSED",
-) {
+): Promise<ListingMutationResult> {
   const { dealer } = await requireDealer();
-  await prisma.listing.updateMany({
+  // updateMany runs as a multi-statement transaction, which the Cloudflare
+  // Workers Neon HTTP adapter can't do (see lib/db.ts) — findFirst + update
+  // instead, same ownership check, no transaction required.
+  const listing = await prisma.listing.findFirst({
     where: { id: listingId, dealerId: dealer.id },
-    data: { status },
+    select: { id: true },
   });
+  if (!listing) return { ok: false, error: "Listing not found" };
+
+  await prisma.listing.update({ where: { id: listing.id }, data: { status } });
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/inventory");
+  revalidatePath(`/dashboard/inventory/${listingId}/edit`);
+  revalidatePath(`/vehicle/${listingId}`);
   revalidatePath(`/s/${dealer.store?.slug}/showcase`);
+  return { ok: true };
 }
 
-export async function deleteListing(listingId: string) {
+// Convenience alias matching the buyer-facing action name used by the
+// inventory row/bulk-action UI — thin wrapper over setListingStatus so
+// there's one code path for the status transition.
+export async function markAsSold(listingId: string): Promise<ListingMutationResult> {
+  return setListingStatus(listingId, "SOLD");
+}
+
+export async function deleteListing(listingId: string): Promise<ListingMutationResult> {
   const { dealer } = await requireDealer();
-  await prisma.listing.deleteMany({
+  // deleteMany runs as a multi-statement transaction, which the Cloudflare
+  // Workers Neon HTTP adapter can't do (see lib/db.ts) — findFirst + delete
+  // instead. ListingPhoto/Listing360Photo/Enquiry/Conversation/etc. all
+  // cascade at the DB level (onDelete: Cascade in schema.prisma), so no
+  // separate photo cleanup step is needed.
+  const listing = await prisma.listing.findFirst({
     where: { id: listingId, dealerId: dealer.id },
+    select: { id: true },
   });
+  if (!listing) return { ok: false, error: "Listing not found" };
+
+  await prisma.listing.delete({ where: { id: listing.id } });
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/inventory");
   revalidatePath(`/s/${dealer.store?.slug}/showcase`);
+  return { ok: true };
+}
+
+export async function bulkSetStatus(
+  listingIds: string[],
+  status: "ACTIVE" | "SOLD" | "PAUSED",
+): Promise<ListingMutationResult> {
+  const { dealer } = await requireDealer();
+  const owned = await prisma.listing.findMany({
+    where: { id: { in: listingIds }, dealerId: dealer.id },
+    select: { id: true },
+  });
+  for (const { id } of owned) {
+    await prisma.listing.update({ where: { id }, data: { status } });
+  }
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/inventory");
+  revalidatePath(`/s/${dealer.store?.slug}/showcase`);
+  return { ok: true };
+}
+
+export async function bulkDelete(listingIds: string[]): Promise<ListingMutationResult> {
+  const { dealer } = await requireDealer();
+  const owned = await prisma.listing.findMany({
+    where: { id: { in: listingIds }, dealerId: dealer.id },
+    select: { id: true },
+  });
+  for (const { id } of owned) {
+    await prisma.listing.delete({ where: { id } });
+  }
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/inventory");
+  revalidatePath(`/s/${dealer.store?.slug}/showcase`);
+  return { ok: true };
 }

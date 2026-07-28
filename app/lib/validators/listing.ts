@@ -3,6 +3,7 @@ import { z } from "zod";
 export const VEHICLE_TYPES = ["CAR", "BIKE"] as const;
 export const FUEL_TYPES = ["PETROL", "DIESEL", "CNG", "ELECTRIC", "HYBRID"] as const;
 export const TRANSMISSIONS = ["MANUAL", "AUTOMATIC", "AMT", "CVT"] as const;
+export const VEHICLE_CONDITIONS = ["A", "B", "C"] as const;
 
 export const listingSchema = z.object({
   vehicleType: z.enum(VEHICLE_TYPES),
@@ -17,6 +18,8 @@ export const listingSchema = z.object({
   transmission: z.enum(TRANSMISSIONS).optional(),
   odometerKm: z.coerce.number().int().min(0).max(1_000_000),
   askingPrice: z.coerce.number().min(1000, "Price too low").max(100_000_000),
+  condition: z.enum(VEHICLE_CONDITIONS).optional(),
+  testDriveAvailable: z.coerce.boolean().optional(),
   description: z.string().max(4000).optional(),
   city: z.string().min(2, "Required").max(60),
   photoUrls: z
