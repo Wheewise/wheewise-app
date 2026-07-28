@@ -44,6 +44,7 @@ model User {
   replies          Reply[]
   postUpvotes      PostUpvote[]
   loanApplications LoanApplication[]
+  testDrives       TestDrive[]
 }
 
 // NextAuth Prisma adapter tables (kept minimal — Credentials provider
@@ -109,6 +110,7 @@ model Dealer {
   apiKeys       ApiKey[]
   inspections   Inspection[]
   payouts       Payout[]
+  testDrives    TestDrive[]
 }
 
 model Store {
@@ -162,6 +164,7 @@ model Listing {
   inspections      Inspection[]
   loanApplications LoanApplication[]
   listingViews     ListingView[]
+  testDrives       TestDrive[]
 
   @@index([city, vehicleType, status])
   @@index([dealerId, status])
@@ -235,6 +238,38 @@ enum EnquiryStatus {
   OPEN
   REPLIED
   CLOSED
+}
+
+// =============================================================
+// Test drives
+// =============================================================
+
+model TestDrive {
+  id          String          @id @default(cuid())
+  listingId   String
+  listing     Listing         @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  // dealerId references Dealer.id (not User.id), matching the convention
+  // used by Enquiry/Conversation/Inspection elsewhere in this schema.
+  dealerId    String
+  dealer      Dealer          @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  buyerId     String
+  buyer       User            @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  scheduledAt DateTime
+  status      TestDriveStatus @default(PENDING)
+  notes       String?         @db.Text
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([dealerId, status, scheduledAt])
+  @@index([buyerId, scheduledAt])
+  @@index([listingId])
+}
+
+enum TestDriveStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
 }
 
 // =============================================================

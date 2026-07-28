@@ -12,6 +12,7 @@ import { SaveButton } from "@/components/vehicle/SaveButton";
 import { CompareButton } from "@/components/vehicle/CompareButton";
 import { ShareButton } from "@/components/vehicle/ShareButton";
 import { EnquireButton } from "@/components/vehicle/EnquireButton";
+import { TestDriveButton } from "@/components/vehicle/TestDriveButton";
 import { LoanApplyForm } from "@/components/vehicle/LoanApplyForm";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { ViewCounter } from "./ViewCounter";
@@ -57,6 +58,7 @@ export default async function VehiclePage({ params }: { params: Params }) {
   if (!listing) notFound();
 
   const session = await auth();
+  const testDriveCount = await prisma.testDrive.count({ where: { listingId: listing.id } });
 
   const dealer = listing.dealer;
   const vehicle = `${listing.year} ${listing.make} ${listing.model}`;
@@ -152,9 +154,16 @@ export default async function VehiclePage({ params }: { params: Params }) {
               </div>
 
               <div className="border-border-default mt-6 border-t pt-4 text-sm text-zinc-500">
-                {listing.enquiryCount}{" "}
-                {listing.enquiryCount === 1 ? "person has" : "people have"} enquired about
-                this vehicle
+                <p>
+                  {listing.enquiryCount}{" "}
+                  {listing.enquiryCount === 1 ? "person has" : "people have"} enquired about
+                  this vehicle
+                </p>
+                {listing.testDriveAvailable ? (
+                  <p className="mt-1">
+                    {testDriveCount} test drive{testDriveCount === 1 ? "" : "s"} booked
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>
@@ -201,13 +210,20 @@ export default async function VehiclePage({ params }: { params: Params }) {
               <p className="mt-1 text-xs text-zinc-500">
                 Message the dealer directly and track their reply.
               </p>
-              <div className="mt-3">
+              <div className="mt-3 space-y-2">
                 <EnquireButton
                   listingId={listing.id}
                   vehicle={vehicle}
                   photoUrl={listing.photos[0]?.url}
                   isLoggedIn={Boolean(session?.user?.id)}
                 />
+                {listing.testDriveAvailable ? (
+                  <TestDriveButton
+                    listingId={listing.id}
+                    vehicleName={vehicle}
+                    isLoggedIn={Boolean(session?.user?.id)}
+                  />
+                ) : null}
               </div>
             </div>
 

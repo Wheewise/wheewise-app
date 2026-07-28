@@ -8,6 +8,7 @@ export type NotificationType =
   | "ENQUIRY_RECEIVED"
   | "PAYOUT_APPROVED"
   | "INSPECTION_SCHEDULED"
+  | "TEST_DRIVE_REQUESTED"
   | "SYSTEM_ALERT";
 
 export interface NotificationPayload {

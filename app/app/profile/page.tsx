@@ -71,6 +71,12 @@ export default async function ProfilePage() {
           >
             My Enquiries →
           </Link>
+          <Link
+            href="/my-test-drives"
+            className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm font-medium text-white hover:border-zinc-700"
+          >
+            My Test Drives →
+          </Link>
         </div>
 
         <form
