@@ -7,6 +7,7 @@ import { formatINR, formatNumber } from "@/lib/format";
 import { whatsappLink } from "@/lib/whatsapp";
 import { appUrl, jsonLdScriptContent } from "@/lib/json-ld";
 import { PhotoViewer } from "./PhotoViewer";
+import { getTransferByListing } from "@/lib/actions/rctransfer";
 import { EmiCalculator } from "@/components/vehicle/EmiCalculator";
 import { SaveButton } from "@/components/vehicle/SaveButton";
 import { CompareButton } from "@/components/vehicle/CompareButton";
@@ -59,6 +60,12 @@ export default async function VehiclePage({ params }: { params: Params }) {
 
   const session = await auth();
   const testDriveCount = await prisma.testDrive.count({ where: { listingId: listing.id } });
+  const transfer =
+    listing.status === "SOLD" ? await getTransferByListing(listing.id) : null;
+  const canViewTransfer =
+    transfer &&
+    session?.user?.id &&
+    (transfer.sellerId === session.user.id || transfer.buyerId === session.user.id);
 
   const dealer = listing.dealer;
   const vehicle = `${listing.year} ${listing.make} ${listing.model}`;
@@ -119,6 +126,18 @@ export default async function VehiclePage({ params }: { params: Params }) {
                 <div className="mt-2 inline-block rounded bg-zinc-200 px-2 py-1 text-xs font-semibold uppercase">
                   Sold
                 </div>
+              ) : null}
+
+              {canViewTransfer ? (
+                <Link
+                  href={`/rc-transfer/${transfer.id}`}
+                  className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm hover:bg-amber-100"
+                >
+                  <span className="font-medium text-amber-900">
+                    🚗 RC Transfer in Progress — Step {transfer.currentStep} of 5
+                  </span>
+                  <span className="font-semibold text-amber-700">Track →</span>
+                </Link>
               ) : null}
 
               <dl className="border-border-default mt-6 grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-4 text-sm sm:grid-cols-3">

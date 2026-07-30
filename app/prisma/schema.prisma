@@ -45,6 +45,8 @@ model User {
   postUpvotes      PostUpvote[]
   loanApplications LoanApplication[]
   testDrives       TestDrive[]
+  transfersAsSeller RCTransfer[] @relation("SellerTransfers")
+  transfersAsBuyer  RCTransfer[] @relation("BuyerTransfers")
 }
 
 // NextAuth Prisma adapter tables (kept minimal — Credentials provider
@@ -165,6 +167,7 @@ model Listing {
   loanApplications LoanApplication[]
   listingViews     ListingView[]
   testDrives       TestDrive[]
+  rcTransfer       RCTransfer?
 
   @@index([city, vehicleType, status])
   @@index([dealerId, status])
@@ -268,6 +271,67 @@ model TestDrive {
 enum TestDriveStatus {
   PENDING
   CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+// =============================================================
+// RC transfer tracking
+// =============================================================
+
+model RCTransfer {
+  id             String           @id @default(cuid())
+  listingId      String           @unique
+  listing        Listing          @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  // Unlike dealerId elsewhere in this schema, seller/buyer here are plain
+  // Users — both sides of an RC transfer are individual account holders,
+  // not a "which Dealer business owns this" ownership check.
+  sellerId       String
+  seller         User             @relation("SellerTransfers", fields: [sellerId], references: [id])
+  buyerId        String
+  buyer          User             @relation("BuyerTransfers", fields: [buyerId], references: [id])
+  registrationNo String
+  vehicleName    String
+  // Decimal to match askingPrice elsewhere — not Int — so money is
+  // represented consistently across the schema.
+  saleAmount     Decimal          @db.Decimal(12, 2)
+  status         RCTransferStatus @default(INITIATED)
+  currentStep    Int              @default(1)
+  notes          String?          @db.Text
+
+  sellerAgreed     Boolean @default(false)
+  buyerAgreed      Boolean @default(false)
+  docsSubmitted    Boolean @default(false)
+  rtoPending       Boolean @default(false)
+  rtoApproved      Boolean @default(false)
+  transferComplete Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents RCDocument[]
+
+  @@index([sellerId, status])
+  @@index([buyerId, status])
+}
+
+model RCDocument {
+  id         String     @id @default(cuid())
+  transferId String
+  transfer   RCTransfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  name       String
+  url        String
+  uploadedBy String
+  createdAt  DateTime   @default(now())
+
+  @@index([transferId])
+}
+
+enum RCTransferStatus {
+  INITIATED
+  DOCS_PENDING
+  RTO_PENDING
+  RTO_APPROVED
   COMPLETED
   CANCELLED
 }
