@@ -1,6 +1,7 @@
 import { requireDealer } from "@/lib/dealer";
 import { getDealerPayouts } from "@/lib/actions/admin";
 import { prisma } from "@/lib/db";
+import { razorpay } from "@/lib/razorpay";
 import { CheckoutButton } from "./CheckoutButton";
 
 type Payout = Awaited<ReturnType<typeof getDealerPayouts>>[number];
@@ -62,6 +63,10 @@ export default async function BillingPage() {
   const { dealer } = await requireDealer({ allowPaywalled: true });
   const sub = dealer.subscription;
   const blocked = sub?.status === "PAST_DUE" || sub?.status === "CANCELLED";
+  // Online checkout needs a registered Razorpay business account, which
+  // isn't set up yet — falls back to a manual, human-assisted upgrade path
+  // until real keys are configured (see .env.example).
+  const billingConfigured = Boolean(razorpay);
 
   const isTrialing = sub?.status === "TRIALING";
   const daysLeft = isTrialing ? daysUntil(sub.currentPeriodEnd) : null;
@@ -183,11 +188,38 @@ export default async function BillingPage() {
                 ))}
               </ul>
 
-              <CheckoutButton plan={plan.id} highlight={plan.popular} />
+              {billingConfigured ? (
+                <CheckoutButton plan={plan.id} highlight={plan.popular} />
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  title="Online checkout isn't set up yet — contact support below to upgrade"
+                  className="border-border-default text-foreground mt-6 w-full cursor-not-allowed rounded-md border px-4 py-2 text-sm font-semibold opacity-60"
+                >
+                  Coming Soon — Contact Support
+                </button>
+              )}
             </div>
           ))}
         </div>
       </section>
+
+      {!billingConfigured ? (
+        <div className="border-border-default bg-background rounded-2xl border p-6">
+          <h3 className="font-bold">Ready to upgrade?</h3>
+          <p className="mt-1 mb-4 text-sm text-zinc-500">
+            Online checkout isn&apos;t live yet — email our team and we&apos;ll activate
+            your subscription manually.
+          </p>
+          <a
+            href="mailto:wheewise@gmail.com?subject=Upgrade%20my%20Wheewise%20dealer%20plan"
+            className="bg-surface-muted hover:bg-border-default inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium"
+          >
+            ✉️ Email Support
+          </a>
+        </div>
+      ) : null}
 
       <div className="border-border-default bg-background flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-6">
         <div>
