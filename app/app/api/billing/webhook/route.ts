@@ -56,13 +56,22 @@ export async function POST(req: Request) {
   const mapped = STATUS_MAP[sub.status];
   if (!mapped) return NextResponse.json({ ok: true });
 
-  await prisma.subscription.updateMany({
+  // updateMany runs as a multi-statement transaction, which the Cloudflare
+  // Workers Neon HTTP adapter can't do (see lib/db.ts) — find the row by
+  // its unique razorpaySubId, then update it directly.
+  const existing = await prisma.subscription.findUnique({
     where: { razorpaySubId: sub.id },
-    data: {
-      status: mapped,
-      ...(sub.current_end ? { currentPeriodEnd: new Date(sub.current_end * 1000) } : {}),
-    },
+    select: { id: true },
   });
+  if (existing) {
+    await prisma.subscription.update({
+      where: { id: existing.id },
+      data: {
+        status: mapped,
+        ...(sub.current_end ? { currentPeriodEnd: new Date(sub.current_end * 1000) } : {}),
+      },
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

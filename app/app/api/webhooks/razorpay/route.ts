@@ -48,22 +48,37 @@ export async function POST(req: Request) {
       }
     }
 
+    // updateMany runs as a multi-statement transaction, which the
+    // Cloudflare Workers Neon HTTP adapter can't do (see lib/db.ts) — find
+    // the row by its unique razorpaySubId, then update it directly.
     if (event.event === "subscription.charged" && event.payload.subscription) {
       const sub = event.payload.subscription.entity;
-      await prisma.subscription.updateMany({
+      const existing = await prisma.subscription.findUnique({
         where: { razorpaySubId: sub.id },
-        data: {
-          status: "ACTIVE",
-          ...(sub.current_end
-            ? { currentPeriodEnd: new Date(sub.current_end * 1000) }
-            : {}),
-        },
+        select: { id: true },
       });
+      if (existing) {
+        await prisma.subscription.update({
+          where: { id: existing.id },
+          data: {
+            status: "ACTIVE",
+            ...(sub.current_end
+              ? { currentPeriodEnd: new Date(sub.current_end * 1000) }
+              : {}),
+          },
+        });
+      }
     } else if (event.event === "subscription.cancelled" && event.payload.subscription) {
-      await prisma.subscription.updateMany({
+      const existing = await prisma.subscription.findUnique({
         where: { razorpaySubId: event.payload.subscription.entity.id },
-        data: { status: "CANCELLED" },
+        select: { id: true },
       });
+      if (existing) {
+        await prisma.subscription.update({
+          where: { id: existing.id },
+          data: { status: "CANCELLED" },
+        });
+      }
     }
 
     return NextResponse.json({ received: true });

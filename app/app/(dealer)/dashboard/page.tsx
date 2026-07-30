@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/Field";
 import { appUrl } from "@/lib/json-ld";
 import { CopyStoreLink } from "@/components/dealer/CopyStoreLink";
 
+function daysUntil(date: Date): number {
+  return Math.ceil((date.getTime() - Date.now()) / 86_400_000);
+}
+
 export default async function DashboardPage() {
   const { dealer } = await requireDealer();
 
@@ -39,11 +43,24 @@ export default async function DashboardPage() {
       : `${sub.plan} · ${sub.status}`
     : "No subscription";
 
+  const trialDaysLeft = sub?.status === "TRIALING" ? daysUntil(sub.currentPeriodEnd) : null;
+  const showTrialWarning = trialDaysLeft !== null && trialDaysLeft <= 7;
+
   const storeUrl = appUrl(`/s/${dealer.store?.slug ?? ""}`);
   const waShareLink = `https://wa.me/?text=${encodeURIComponent(`Check out my showroom: ${storeUrl}`)}`;
 
   return (
     <div className="space-y-8">
+      {showTrialWarning ? (
+        <Link
+          href="/dashboard/billing"
+          className="border-brand-red/40 bg-brand-red/5 hover:bg-brand-red/10 block rounded-lg border p-4 text-sm font-medium"
+        >
+          ⚠️ Trial expires in {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} —
+          Upgrade now to keep your listings live
+        </Link>
+      ) : null}
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
