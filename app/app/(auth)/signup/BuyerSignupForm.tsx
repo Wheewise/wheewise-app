@@ -1,8 +1,17 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useActionState } from "react";
 import { signupBuyer, type SignupState } from "@/lib/actions/auth";
-import { Field, Input, Button } from "@/components/ui/Field";
+import { Field, Input, Select, Button } from "@/components/ui/Field";
+import statesData from "@/lib/data/india-states-districts.json";
+
+interface StateEntry {
+  state: string;
+  districts: string[];
+}
+
+const STATES: StateEntry[] = (statesData as { states: StateEntry[] }).states;
 
 export function BuyerSignupForm() {
   const [state, formAction, pending] = useActionState<SignupState | undefined, FormData>(
@@ -10,6 +19,12 @@ export function BuyerSignupForm() {
     undefined,
   );
   const errors = state && !state.ok ? state.errors : {};
+
+  const [selectedState, setSelectedState] = useState("");
+  const districts = useMemo(
+    () => STATES.find((entry) => entry.state === selectedState)?.districts ?? [],
+    [selectedState],
+  );
 
   return (
     <form action={formAction} className="space-y-4">
@@ -51,11 +66,44 @@ export function BuyerSignupForm() {
           minLength={8}
         />
       </Field>
-      <Field label="District" name="district" errors={errors.district}>
-        <Input id="district" name="district" autoComplete="address-level2" required />
-      </Field>
       <Field label="State" name="state" errors={errors.state}>
-        <Input id="state" name="state" autoComplete="address-level1" required />
+        <Select
+          id="state"
+          name="state"
+          autoComplete="address-level1"
+          required
+          value={selectedState}
+          onChange={(e) => setSelectedState(e.target.value)}
+        >
+          <option value="" disabled>
+            Select state
+          </option>
+          {STATES.map((entry) => (
+            <option key={entry.state} value={entry.state}>
+              {entry.state}
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="District" name="district" errors={errors.district}>
+        <Select
+          key={selectedState}
+          id="district"
+          name="district"
+          autoComplete="address-level2"
+          required
+          disabled={!selectedState}
+          defaultValue=""
+        >
+          <option value="" disabled>
+            {selectedState ? "Select district" : "Select state first"}
+          </option>
+          {districts.map((district) => (
+            <option key={district} value={district}>
+              {district}
+            </option>
+          ))}
+        </Select>
       </Field>
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Creating account…" : "Create account"}

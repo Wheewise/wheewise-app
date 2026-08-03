@@ -1,4 +1,4 @@
-import { type InputHTMLAttributes, type ReactNode } from "react";
+import { type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from "react";
 
 export function Field({
   label,
@@ -42,6 +42,39 @@ export function Input(
         invalid ? "border-brand-red" : "border-border-default"
       } ${className}`}
     />
+  );
+}
+
+export function Select(
+  props: SelectHTMLAttributes<HTMLSelectElement> & { invalid?: boolean },
+) {
+  const { invalid, className = "", children, ...rest } = props;
+  return (
+    <div className="relative">
+      <select
+        {...rest}
+        aria-invalid={invalid || undefined}
+        className={`focus:border-brand-red focus:ring-brand-red/20 bg-background text-foreground block w-full appearance-none rounded-md border px-3 py-2 pr-9 text-sm shadow-xs transition-colors outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+          invalid ? "border-brand-red" : "border-border-default"
+        } ${className}`}
+      >
+        {children}
+      </select>
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 20 20"
+        fill="none"
+        className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-zinc-500"
+      >
+        <path
+          d="M5 7.5L10 12.5L15 7.5"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
   );
 }
 
