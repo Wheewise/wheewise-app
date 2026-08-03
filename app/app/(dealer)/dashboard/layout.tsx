@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/lib/auth";
 import { Logo } from "@/components/brand/Logo";
 import { DashboardNav } from "./DashboardNav";
+import { MobileNav } from "./MobileNav";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 
 export default async function DashboardLayout({
@@ -45,11 +45,9 @@ export default async function DashboardLayout({
         </form>
       </aside>
 
-      <header className="border-border-default bg-background sticky top-0 z-10 flex h-14 items-center justify-between border-b px-4 lg:hidden">
+      <header className="border-border-default bg-background sticky top-0 z-10 flex h-14 items-center gap-2 border-b px-4 lg:hidden">
+        <MobileNav />
         <Logo variant="wordmark" size={22} href="/dashboard" />
-        <Link href="/dashboard" className="text-brand-red text-sm font-medium">
-          Dashboard
-        </Link>
       </header>
 
       <main className="lg:pl-60">
