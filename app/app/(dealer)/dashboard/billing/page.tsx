@@ -1,7 +1,9 @@
+import { redirect } from "next/navigation";
 import { requireDealer } from "@/lib/dealer";
 import { getDealerPayouts } from "@/lib/actions/admin";
 import { prisma } from "@/lib/db";
 import { razorpay } from "@/lib/razorpay";
+import { isBillingEnabled } from "@/lib/billing";
 import { CheckoutButton } from "./CheckoutButton";
 
 type Payout = Awaited<ReturnType<typeof getDealerPayouts>>[number];
@@ -60,6 +62,8 @@ function daysUntil(date: Date): number {
 }
 
 export default async function BillingPage() {
+  if (!isBillingEnabled()) redirect("/dashboard");
+
   const { dealer } = await requireDealer({ allowPaywalled: true });
   const sub = dealer.subscription;
   const blocked = sub?.status === "PAST_DUE" || sub?.status === "CANCELLED";

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { isBillingEnabled } from "@/lib/billing";
 
 export async function requireDealer({
   allowPaywalled = false,
@@ -15,7 +16,7 @@ export async function requireDealer({
   });
   if (!dealer) redirect("/login");
 
-  if (!allowPaywalled) {
+  if (!allowPaywalled && isBillingEnabled()) {
     const status = dealer.subscription?.status;
     const periodEnd = dealer.subscription?.currentPeriodEnd;
 

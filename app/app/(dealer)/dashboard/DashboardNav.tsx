@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { isBillingEnabled } from "@/lib/billing";
 
 const items = [
   { href: "/dashboard", label: "Overview", exact: true },
@@ -14,7 +15,7 @@ const items = [
   { href: "/dashboard/store", label: "Storefront" },
   { href: "/dashboard/inspections", label: "Inspections" },
   { href: "/dashboard/loans", label: "Loans" },
-  { href: "/dashboard/billing", label: "Billing" },
+  ...(isBillingEnabled() ? [{ href: "/dashboard/billing", label: "Billing" }] : []),
 ];
 
 export function DashboardNav() {

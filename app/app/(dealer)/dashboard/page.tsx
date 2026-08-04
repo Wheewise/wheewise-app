@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireDealer } from "@/lib/dealer";
 import { Button } from "@/components/ui/Field";
 import { siteUrl } from "@/lib/site-url";
+import { isBillingEnabled } from "@/lib/billing";
 import { CopyStoreLink } from "@/components/dealer/CopyStoreLink";
 
 function daysUntil(date: Date): number {
@@ -43,8 +44,9 @@ export default async function DashboardPage() {
       : `${sub.plan} · ${sub.status}`
     : "No subscription";
 
+  const billingOn = isBillingEnabled();
   const trialDaysLeft = sub?.status === "TRIALING" ? daysUntil(sub.currentPeriodEnd) : null;
-  const showTrialWarning = trialDaysLeft !== null && trialDaysLeft <= 7;
+  const showTrialWarning = billingOn && trialDaysLeft !== null && trialDaysLeft <= 7;
 
   const storeUrl = siteUrl(`/s/${dealer.store?.slug ?? ""}`);
   const waShareLink = `https://wa.me/?text=${encodeURIComponent(`Check out my showroom: ${storeUrl}`)}`;
@@ -96,7 +98,7 @@ export default async function DashboardPage() {
         <Kpi label="Active listings" value={activeListings} />
         <Kpi label="Total leads" value={totalLeads} />
         <Kpi label="Lead-to-view" value={ratio} />
-        <Kpi label="Subscription" value={subLabel} small />
+        {billingOn ? <Kpi label="Subscription" value={subLabel} small /> : null}
       </div>
 
       <section className="border-border-default bg-background rounded-lg border">
