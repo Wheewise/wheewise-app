@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireDealer } from "@/lib/dealer";
 import { Button } from "@/components/ui/Field";
-import { appUrl } from "@/lib/json-ld";
+import { siteUrl } from "@/lib/site-url";
 import { CopyStoreLink } from "@/components/dealer/CopyStoreLink";
 
 function daysUntil(date: Date): number {
@@ -46,7 +46,7 @@ export default async function DashboardPage() {
   const trialDaysLeft = sub?.status === "TRIALING" ? daysUntil(sub.currentPeriodEnd) : null;
   const showTrialWarning = trialDaysLeft !== null && trialDaysLeft <= 7;
 
-  const storeUrl = appUrl(`/s/${dealer.store?.slug ?? ""}`);
+  const storeUrl = siteUrl(`/s/${dealer.store?.slug ?? ""}`);
   const waShareLink = `https://wa.me/?text=${encodeURIComponent(`Check out my showroom: ${storeUrl}`)}`;
 
   return (

@@ -6,6 +6,7 @@ import { whatsappLink } from "@/lib/whatsapp";
 import { computeTrustScore } from "@/lib/trust-score";
 import { calculateEmi } from "@/lib/emi";
 import { appUrl, jsonLdScriptContent } from "@/lib/json-ld";
+import { siteUrl } from "@/lib/site-url";
 import { ShowcaseHero } from "@/components/storefront/ShowcaseHero";
 import { TrustStrip } from "@/components/storefront/TrustStrip";
 import { FeaturedCarousel } from "@/components/storefront/FeaturedCarousel";
@@ -51,7 +52,7 @@ export async function generateMetadata({
       type: "website",
     },
     alternates: {
-      canonical: appUrl(`/s/${store.slug}/showcase`),
+      canonical: siteUrl(`/s/${store.slug}/showcase`),
     },
   };
 }
@@ -220,7 +221,7 @@ export default async function ShowcasePage({
     name: dealer.businessName,
     image: store.logoUrl || store.bannerUrl || undefined,
     telephone: dealer.phone,
-    url: appUrl(`/s/${store.slug}/showcase`),
+    url: siteUrl(`/s/${store.slug}/showcase`),
     address: {
       "@type": "PostalAddress",
       addressLocality: dealer.city,
