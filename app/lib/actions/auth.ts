@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { signIn } from "@/lib/auth";
+import { roleRedirectPath } from "@/lib/role-redirect";
 
 import { passwordRule } from "@/lib/password";
 
@@ -306,5 +307,5 @@ export async function loginAction(
     where: { email: parsed.data.email },
     select: { role: true },
   });
-  redirect(user?.role === "DEALER" ? "/dashboard" : "/browse");
+  redirect(roleRedirectPath(user?.role));
 }

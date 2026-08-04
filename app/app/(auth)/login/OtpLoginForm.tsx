@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Field";
+import { roleRedirectPath } from "@/lib/role-redirect";
 
 export function OtpLoginForm() {
   const router = useRouter();
@@ -57,7 +58,8 @@ export function OtpLoginForm() {
       if (result?.error) {
         setError("Invalid or expired OTP. Try again.");
       } else {
-        router.push("/");
+        const session = await getSession();
+        router.push(roleRedirectPath(session?.user?.role));
         router.refresh();
       }
     } catch {
