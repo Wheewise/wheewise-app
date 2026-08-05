@@ -683,6 +683,7 @@ enum Role {
   BUYER
   DEALER
   ADMIN
+  SUPER_ADMIN
 }
 
 enum DealerStatus {

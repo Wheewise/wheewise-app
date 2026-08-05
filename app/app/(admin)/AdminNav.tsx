@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 const items = [
   { href: "/admin", label: "Overview", exact: true },
   { href: "/admin/dealers", label: "Dealers" },
+  { href: "/admin/buyers", label: "Buyers" },
   { href: "/admin/listings", label: "Listings" },
+  { href: "/admin/subscriptions", label: "Subscriptions" },
   { href: "/admin/inspectors", label: "Inspectors" },
   { href: "/admin/inspections", label: "Inspections" },
   { href: "/admin/community", label: "Community" },
@@ -28,8 +30,8 @@ export function AdminNav() {
               href={item.href}
               className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 active
-                  ? "bg-amber-100 text-amber-800"
-                  : "text-foreground hover:bg-surface-muted"
+                  ? "bg-[#E8192C]/15 text-[#E8192C]"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
               }`}
             >
               {item.label}

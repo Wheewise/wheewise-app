@@ -6,7 +6,10 @@ import { prisma } from "@/lib/db";
 
 async function requireAdmin() {
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
+  if (
+    !session?.user?.id ||
+    (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
+  ) {
     throw new Error("Unauthorized");
   }
 }

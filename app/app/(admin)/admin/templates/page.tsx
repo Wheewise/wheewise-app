@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/db";
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export default async function TemplatesPage() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") redirect("/");
+  // Already guarded by app/(admin)/layout.tsx — kept here too since this
+  // page previously had its own (now redundant) check; calling the shared
+  // helper keeps ADMIN/SUPER_ADMIN handling in one place instead of two.
+  await requireAdmin();
 
   const templates = await prisma.notificationTemplate.findMany({
     orderBy: { name: "asc" },
