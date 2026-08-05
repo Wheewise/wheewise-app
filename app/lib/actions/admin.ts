@@ -41,6 +41,69 @@ export async function getDealers() {
   });
 }
 
+export async function getBuyers({
+  q,
+  page = 1,
+  pageSize = 20,
+}: {
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  await requireAdmin();
+
+  const where = q
+    ? {
+        role: "BUYER" as const,
+        OR: [
+          { name: { contains: q, mode: "insensitive" as const } },
+          { email: { contains: q, mode: "insensitive" as const } },
+        ],
+      }
+    : { role: "BUYER" as const };
+
+  const [total, buyers] = await Promise.all([
+    prisma.user.count({ where }),
+    prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        _count: { select: { enquiries: true, savedListings: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+  ]);
+
+  return {
+    buyers,
+    total,
+    page,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+  };
+}
+
+export async function getDealerSubscriptions() {
+  await requireAdmin();
+
+  return prisma.dealer.findMany({
+    select: {
+      id: true,
+      businessName: true,
+      city: true,
+      store: { select: { slug: true } },
+      subscription: {
+        select: { plan: true, status: true, currentPeriodEnd: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 export async function getPendingModeration() {
   await requireAdmin();
 

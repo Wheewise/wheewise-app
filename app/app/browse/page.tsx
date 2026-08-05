@@ -44,6 +44,8 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   const session = await auth();
   const isLoggedIn = Boolean(session?.user?.id);
   const isBuyer = isLoggedIn && session?.user?.role === "BUYER";
+  const isAdmin =
+    session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
   const showWelcomeBanner = sp.welcome === "1";
 
   const buyerStats =
@@ -114,21 +116,28 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
       <header className="border-b border-zinc-800 bg-zinc-950">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Logo variant="wordmark" size={26} href="/" />
-          {isBuyer ? (
-            <Link
-              href="/profile"
-              className="text-sm font-medium text-zinc-300 hover:text-white"
-            >
-              My Profile
-            </Link>
-          ) : (
-            <Link
-              href="/signup/dealer"
-              className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
-            >
-              Sell on Wheewise
-            </Link>
-          )}
+          <div className="flex items-center gap-4">
+            {isAdmin ? (
+              <Link href="/admin" className="text-sm font-medium text-[#E8192C]">
+                Admin
+              </Link>
+            ) : null}
+            {isBuyer ? (
+              <Link
+                href="/profile"
+                className="text-sm font-medium text-zinc-300 hover:text-white"
+              >
+                My Profile
+              </Link>
+            ) : (
+              <Link
+                href="/signup/dealer"
+                className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
+              >
+                Sell on Wheewise
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 
